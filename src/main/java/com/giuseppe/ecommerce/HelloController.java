@@ -13,6 +13,6 @@ public class HelloController {
 
     @GetMapping("/status")
     public String status() {
-        return "E-commerce API is running";
+        return "Start of new E-Commerce";
     }
 }
