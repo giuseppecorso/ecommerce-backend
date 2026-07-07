@@ -1,10 +1,15 @@
 package com.giuseppe.ecommerce.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
 import java.math.BigDecimal;
 
+@Entity
 public class Product {
     private String name;
     private String description;
+    @Id
     private Long id;
     private BigDecimal price;
     private int stockQuantity;
