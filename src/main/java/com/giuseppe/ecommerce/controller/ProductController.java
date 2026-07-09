@@ -2,12 +2,12 @@ package com.giuseppe.ecommerce.controller;
 
 import com.giuseppe.ecommerce.model.Product;
 import com.giuseppe.ecommerce.repository.ProductRepository;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 public class ProductController {
@@ -37,5 +37,13 @@ public class ProductController {
         return repository.save(prod);
     }
 
-
+    @GetMapping("/api/products/{id}")
+    public ResponseEntity<Product> getProduct(@PathVariable Long id) {
+        Optional<Product> box = repository.findById(id);
+        if (box.isPresent()) {
+            return ResponseEntity.ok(box.get());
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
 }
