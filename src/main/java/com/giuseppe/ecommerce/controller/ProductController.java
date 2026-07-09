@@ -3,6 +3,8 @@ package com.giuseppe.ecommerce.controller;
 import com.giuseppe.ecommerce.model.Product;
 import com.giuseppe.ecommerce.repository.ProductRepository;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,6 +30,11 @@ public class ProductController {
     @GetMapping("/api/products")
     public List<Product> getProducts() {
         return repository.findAll();
+    }
+
+    @PostMapping("/api/products")
+    public Product addProduct(@RequestBody Product prod) {
+        return repository.save(prod);
     }
 
 
