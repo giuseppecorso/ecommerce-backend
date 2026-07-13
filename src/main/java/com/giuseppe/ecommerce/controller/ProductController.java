@@ -2,6 +2,7 @@ package com.giuseppe.ecommerce.controller;
 
 import com.giuseppe.ecommerce.model.Product;
 import com.giuseppe.ecommerce.repository.ProductRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,11 +30,13 @@ public class ProductController {
 
     @GetMapping("/api/products")
     public List<Product> getProducts() {
+
         return repository.findAll();
     }
 
     @PostMapping("/api/products")
     public Product addProduct(@RequestBody Product prod) {
+
         return repository.save(prod);
     }
 
@@ -47,12 +50,24 @@ public class ProductController {
         }
     }
 
-    @DeleteMapping ("/api/products/{id}")
+    @DeleteMapping("/api/products/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         Optional<Product> box = repository.findById(id);
         if (box.isPresent()) {
             repository.deleteById(id);
             return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/api/products/{id}")
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id,@RequestBody Product prod) {
+        prod.setId(id);
+        Optional<Product> box = repository.findById(id);
+        if (box.isPresent()) {
+            repository.save(prod);
+            return ResponseEntity.ok(prod);
         } else {
             return ResponseEntity.notFound().build();
         }

@@ -46,4 +46,8 @@ public class Product {
     public int getStockQuantity() {
         return stockQuantity;
     }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 }
