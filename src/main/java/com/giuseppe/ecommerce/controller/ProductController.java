@@ -37,6 +37,8 @@ public class ProductController {
     @PostMapping("/api/products")
     public Product addProduct(@RequestBody Product prod) {
 
+        prod.setId(null);
+
         return repository.save(prod);
     }
 
