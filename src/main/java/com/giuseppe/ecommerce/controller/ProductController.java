@@ -2,6 +2,11 @@ package com.giuseppe.ecommerce.controller;
 
 import com.giuseppe.ecommerce.model.Product;
 import com.giuseppe.ecommerce.repository.ProductRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
+@Tag(name = "Product Controller")
 public class ProductController {
 
     private final ProductRepository repository;
@@ -19,12 +25,15 @@ public class ProductController {
     }
 
     @GetMapping("/api/products")
+    @Operation(summary = "Get all products")
     public List<Product> getProducts() {
 
         return repository.findAll();
     }
 
     @PostMapping("/api/products")
+    @Operation(summary = "Create a new product")
+    @ApiResponse(responseCode = "201", description = "Product created")
     public ResponseEntity<Product> addProduct(@RequestBody Product prod) {
 
         prod.setId(null);
@@ -33,6 +42,11 @@ public class ProductController {
     }
 
     @GetMapping("/api/products/{id}")
+    @Operation(summary = "Get product by id")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Operation successful"),
+            @ApiResponse(responseCode = "404", description = "Resource not found", content = @Content)
+    })
     public ResponseEntity<Product> getProduct(@PathVariable Long id) {
         Optional<Product> box = repository.findById(id);
         if (box.isPresent()) {
@@ -43,6 +57,11 @@ public class ProductController {
     }
 
     @DeleteMapping("/api/products/{id}")
+    @Operation(summary = "Delete a product by id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Product deleted"),
+            @ApiResponse(responseCode = "404", description = "Product not found")
+    })
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         Optional<Product> box = repository.findById(id);
         if (box.isPresent()) {
@@ -54,6 +73,11 @@ public class ProductController {
     }
 
     @PutMapping("/api/products/{id}")
+    @Operation(summary = "Update a product by id")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Product updated"),
+            @ApiResponse(responseCode = "404", description = "Product not found", content = @Content)
+    })
     public ResponseEntity<Product> updateProduct(@PathVariable Long id,@RequestBody Product prod) {
         prod.setId(id);
         Optional<Product> box = repository.findById(id);

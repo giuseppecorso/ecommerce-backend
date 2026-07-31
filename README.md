@@ -30,6 +30,13 @@ learning project. Currently in active development.
 | PUT    | /api/products/{id} | Update a product by id| 200/404 |
 | DELETE | /api/products/{id} | Delete a product by id| 204/404 |
 
+## API Documentation
+
+Interactive API documentation is available at
+`http://localhost:8080/swagger-ui.html` when the application is running.
+
+![Swagger UI](docs/swagger-ui.png)
+
 ## Getting Started
 
 ### Prerequisites
