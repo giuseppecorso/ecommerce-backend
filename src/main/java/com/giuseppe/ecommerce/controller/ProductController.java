@@ -2,6 +2,7 @@ package com.giuseppe.ecommerce.controller;
 
 import com.giuseppe.ecommerce.model.Product;
 import com.giuseppe.ecommerce.repository.ProductRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,11 +25,11 @@ public class ProductController {
     }
 
     @PostMapping("/api/products")
-    public Product addProduct(@RequestBody Product prod) {
+    public ResponseEntity<Product> addProduct(@RequestBody Product prod) {
 
         prod.setId(null);
 
-        return repository.save(prod);
+        return ResponseEntity.status(HttpStatus.CREATED).body(repository.save(prod));
     }
 
     @GetMapping("/api/products/{id}")
