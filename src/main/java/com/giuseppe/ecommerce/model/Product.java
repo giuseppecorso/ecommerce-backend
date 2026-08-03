@@ -4,16 +4,22 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 
 import java.math.BigDecimal;
 
 @Entity
 public class Product {
+    @NotBlank
     private String name;
     private String description;
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Positive
     private BigDecimal price;
+    @PositiveOrZero
     private int stockQuantity;
 
     public Product() {

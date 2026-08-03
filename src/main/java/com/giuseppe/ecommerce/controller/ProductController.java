@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ public class ProductController {
     @PostMapping("/api/products")
     @Operation(summary = "Create a new product")
     @ApiResponse(responseCode = "201", description = "Product created")
-    public ResponseEntity<Product> addProduct(@RequestBody Product prod) {
+    public ResponseEntity<Product> addProduct(@RequestBody @Valid Product prod) {
 
         prod.setId(null);
 
