@@ -34,7 +34,10 @@ public class ProductController {
 
     @PostMapping("/api/products")
     @Operation(summary = "Create a new product")
-    @ApiResponse(responseCode = "201", description = "Product created")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Product created"),
+            @ApiResponse(responseCode = "400", description = "Invalid product data")
+    })
     public ResponseEntity<Product> addProduct(@RequestBody @Valid Product prod) {
 
         prod.setId(null);
@@ -77,9 +80,10 @@ public class ProductController {
     @Operation(summary = "Update a product by id")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Product updated"),
-            @ApiResponse(responseCode = "404", description = "Product not found", content = @Content)
+            @ApiResponse(responseCode = "404", description = "Product not found", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Invalid product data")
     })
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id,@RequestBody Product prod) {
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id,@RequestBody @Valid Product prod) {
         prod.setId(id);
         Optional<Product> box = repository.findById(id);
         if (box.isPresent()) {
