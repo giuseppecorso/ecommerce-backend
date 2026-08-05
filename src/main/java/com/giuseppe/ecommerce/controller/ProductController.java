@@ -1,7 +1,6 @@
 package com.giuseppe.ecommerce.controller;
 
 import com.giuseppe.ecommerce.model.Product;
-import com.giuseppe.ecommerce.repository.ProductRepository;
 import com.giuseppe.ecommerce.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,11 +20,9 @@ import java.util.Optional;
 public class ProductController {
 
     private final ProductService service;
-    private final ProductRepository repository;
 
-    public ProductController(ProductRepository repository, ProductService service) {
+    public ProductController(ProductService service) {
         this.service = service;
-        this.repository = repository;
     }
 
     @GetMapping("/api/products")
@@ -43,9 +40,8 @@ public class ProductController {
     })
     public ResponseEntity<Product> addProduct(@RequestBody @Valid Product prod) {
 
-        prod.setId(null);
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.addNewProduct(prod));
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(repository.save(prod));
     }
 
     @GetMapping("/api/products/{id}")
@@ -70,9 +66,7 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Product not found")
     })
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        Optional<Product> box = repository.findById(id);
-        if (box.isPresent()) {
-            repository.deleteById(id);
+        if (service.deleteById(id)) {
             return ResponseEntity.noContent().build();
         } else {
             return ResponseEntity.notFound().build();
@@ -87,11 +81,11 @@ public class ProductController {
             @ApiResponse(responseCode = "400", description = "Invalid product data")
     })
     public ResponseEntity<Product> updateProduct(@PathVariable Long id,@RequestBody @Valid Product prod) {
-        prod.setId(id);
-        Optional<Product> box = repository.findById(id);
+
+        Optional<Product> box = service.updateProduct(id, prod);
+
         if (box.isPresent()) {
-            repository.save(prod);
-            return ResponseEntity.ok(prod);
+            return ResponseEntity.ok(box.get());
         } else {
             return ResponseEntity.notFound().build();
         }

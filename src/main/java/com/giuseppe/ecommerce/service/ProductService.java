@@ -25,4 +25,29 @@ public class ProductService {
 
         return repository.findById(id);
     }
+
+    public Product addNewProduct(Product prod) {
+
+        prod.setId(null);
+
+        return repository.save(prod);
+    }
+
+    public boolean deleteById(Long id) {
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public Optional<Product> updateProduct(Long id, Product prod) {
+        prod.setId(id);
+        if (repository.existsById(id)) {
+            return Optional.of(repository.save(prod));
+        } else {
+            return Optional.empty();
+        }
+    }
 }
