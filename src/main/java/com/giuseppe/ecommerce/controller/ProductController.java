@@ -2,6 +2,7 @@ package com.giuseppe.ecommerce.controller;
 
 import com.giuseppe.ecommerce.model.Product;
 import com.giuseppe.ecommerce.repository.ProductRepository;
+import com.giuseppe.ecommerce.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,9 +20,11 @@ import java.util.Optional;
 @Tag(name = "Product Controller")
 public class ProductController {
 
+    private final ProductService service;
     private final ProductRepository repository;
 
-    public ProductController(ProductRepository repository) {
+    public ProductController(ProductRepository repository, ProductService service) {
+        this.service = service;
         this.repository = repository;
     }
 
@@ -29,7 +32,7 @@ public class ProductController {
     @Operation(summary = "Get all products")
     public List<Product> getProducts() {
 
-        return repository.findAll();
+        return service.getAllProducts();
     }
 
     @PostMapping("/api/products")
@@ -52,7 +55,7 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Resource not found", content = @Content)
     })
     public ResponseEntity<Product> getProduct(@PathVariable Long id) {
-        Optional<Product> box = repository.findById(id);
+        Optional<Product> box = service.getProductById(id);
         if (box.isPresent()) {
             return ResponseEntity.ok(box.get());
         } else {
