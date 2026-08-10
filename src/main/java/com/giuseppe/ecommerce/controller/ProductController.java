@@ -1,5 +1,7 @@
 package com.giuseppe.ecommerce.controller;
 
+import com.giuseppe.ecommerce.dto.ProductRequest;
+import com.giuseppe.ecommerce.dto.ProductResponse;
 import com.giuseppe.ecommerce.model.Product;
 import com.giuseppe.ecommerce.service.ProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,9 +40,15 @@ public class ProductController {
             @ApiResponse(responseCode = "201", description = "Product created"),
             @ApiResponse(responseCode = "400", description = "Invalid product data")
     })
-    public ResponseEntity<Product> addProduct(@RequestBody @Valid Product prod) {
+    public ResponseEntity<ProductResponse> addProduct(@RequestBody @Valid ProductRequest req) {
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.addNewProduct(prod));
+        Product newProduct = new Product(null, req.getName(), req.getDescription(), req.getPrice(), req.getStockQuantity());
+
+        Product saved = service.addNewProduct(newProduct);
+
+        ProductResponse resp = new ProductResponse(saved.getId(),  saved.getName(), saved.getDescription(), saved.getPrice(), saved.getStockQuantity());
+
+        return new ResponseEntity<>(resp, HttpStatus.CREATED);
 
     }
 

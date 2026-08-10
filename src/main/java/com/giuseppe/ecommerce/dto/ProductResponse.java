@@ -1,26 +1,15 @@
-package com.giuseppe.ecommerce.model;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+package com.giuseppe.ecommerce.dto;
 
 import java.math.BigDecimal;
 
-@Entity
-public class Product {
-
+public class ProductResponse {
+    private Long  id;
     private String name;
     private String description;
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
     private BigDecimal price;
     private int stockQuantity;
 
-    public Product() {
-    }
-
-    public Product(Long id, String name, String description, BigDecimal price, int stockQuantity) {
+    public ProductResponse(Long id, String name, String description, BigDecimal price, int stockQuantity) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -46,9 +35,5 @@ public class Product {
 
     public int getStockQuantity() {
         return stockQuantity;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 }
