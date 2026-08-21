@@ -97,12 +97,16 @@ public class ProductController {
             @ApiResponse(responseCode = "404", description = "Product not found", content = @Content),
             @ApiResponse(responseCode = "400", description = "Invalid product data")
     })
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id,@RequestBody @Valid Product prod) {
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id,@RequestBody @Valid ProductRequest req) {
 
-        Optional<Product> box = service.updateProduct(id, prod);
+        Product productClient = new Product(id, req.getName(), req.getDescription(), req.getPrice(), req.getStockQuantity());
+
+        Optional<Product> box = service.updateProduct(id, productClient);
 
         if (box.isPresent()) {
-            return ResponseEntity.ok(box.get());
+            Product saved = box.get();
+            ProductResponse resp = new ProductResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getPrice(), saved.getStockQuantity());
+            return ResponseEntity.ok(resp);
         } else {
             return ResponseEntity.notFound().build();
         }
