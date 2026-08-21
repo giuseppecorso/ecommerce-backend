@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,9 +30,15 @@ public class ProductController {
 
     @GetMapping("/api/products")
     @Operation(summary = "Get all products")
-    public List<Product> getProducts() {
+    public List<ProductResponse> getProducts() {
 
-        return service.getAllProducts();
+        List<ProductResponse> responses = new ArrayList<>();
+
+        for (Product p :  service.getAllProducts()) {
+            responses.add(new ProductResponse(p.getId(), p.getName(), p.getDescription(), p.getPrice(), p.getStockQuantity()));
+        }
+
+        return responses;
     }
 
     @PostMapping("/api/products")
@@ -58,10 +65,12 @@ public class ProductController {
             @ApiResponse(responseCode = "200", description = "Operation successful"),
             @ApiResponse(responseCode = "404", description = "Resource not found", content = @Content)
     })
-    public ResponseEntity<Product> getProduct(@PathVariable Long id) {
+    public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
         Optional<Product> box = service.getProductById(id);
         if (box.isPresent()) {
-            return ResponseEntity.ok(box.get());
+            Product found = box.get();
+            ProductResponse resp = new ProductResponse(found.getId(), found.getName(), found.getDescription(), found.getPrice(), found.getStockQuantity());
+            return ResponseEntity.ok(resp);
         } else {
             return ResponseEntity.notFound().build();
         }
