@@ -45,4 +45,16 @@ public class Order {
     public void setId(Long id) {
         this.id = id;
     }
+
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public void setDateOrder(LocalDateTime dateOrder) {
+        this.dateOrder = dateOrder;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

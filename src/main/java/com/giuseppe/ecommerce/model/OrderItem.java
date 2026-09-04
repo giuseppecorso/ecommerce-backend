@@ -39,4 +39,20 @@ public class OrderItem {
     public BigDecimal getPrice() {
         return price;
     }
+
+    public void setOrder(Order order) {
+        this.order = order;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
 }
