@@ -29,6 +29,10 @@ learning project. Currently in active development.
 | POST   | /api/products      | Create a new product  | 201     |
 | PUT    | /api/products/{id} | Update a product by id| 200/404 |
 | DELETE | /api/products/{id} | Delete a product by id| 204/404 |
+| GET    | /api/orders               | Get all orders        | 200     |
+| GET    | /api/orders/{id}          | Get an order by id    | 200/404 |
+| POST   | /api/orders               | Create a new order    | 201/400/404 |
+| PATCH  | /api/orders/{id}/status   | Update order status   | 200/404/400 |
 
 ## API Documentation
 
@@ -109,3 +113,9 @@ the persistence model do not silently change the public API.
 - Order management
 - Unit tests (JUnit)
 - Payment module
+
+## NOTE
+PUT and DELETE are not available for orders. An order is a historical
+record: once placed, it must remain traceable. The only permitted change
+is its status (NEW, PAID, SHIPPED), exposed through a dedicated PATCH
+endpoint. Cancelling an order is a status change, not a deletion.

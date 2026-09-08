@@ -11,6 +11,7 @@ import com.giuseppe.ecommerce.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -57,5 +58,20 @@ public class OrderService {
         }
 
         return Optional.of(saved);
+    }
+
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
+
+    public Optional<Order> updateStatus(Long id, String status) {
+        Optional<Order> order = orderRepository.findById(id);
+        if (order.isPresent()) {
+            Order found = order.get();
+            found.setStatus(status);
+            return Optional.of(orderRepository.save(found));
+        } else {
+            return Optional.empty();
+        }
     }
 }

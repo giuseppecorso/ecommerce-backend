@@ -3,6 +3,7 @@ package com.giuseppe.ecommerce.controller;
 import com.giuseppe.ecommerce.dto.*;
 import com.giuseppe.ecommerce.model.Order;
 import com.giuseppe.ecommerce.model.OrderItem;
+import com.giuseppe.ecommerce.model.Product;
 import com.giuseppe.ecommerce.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -75,5 +76,47 @@ public class OrderController {
             return ResponseEntity.notFound().build();
         }
 
+    }
+
+    @GetMapping("/api/orders")
+    @Operation(summary = "Get all orders")
+    public List<OrderResponse> getOrders() {
+
+        List<OrderResponse> responses = new ArrayList<>();
+
+        for (Order o : orderService.getAllOrders()) {
+            List<OrderItemResponse> items = new ArrayList<>();
+            for (OrderItem orderItem : o.getItems()) {
+                OrderItemResponse item = new OrderItemResponse(orderItem.getProduct().getId(), orderItem.getProduct().getName(), orderItem.getQuantity(), orderItem.getPrice());
+                items.add(item);
+            }
+            OrderResponse resp = new OrderResponse(o.getId(), o.getCustomerName(), o.getDateOrder(), o.getStatus(), items);
+            responses.add(resp);
+        }
+
+        return responses;
+    }
+
+    @PatchMapping("/api/orders/{id}/status")
+    @Operation(summary = "Update order status")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Order status updated"),
+            @ApiResponse(responseCode = "404", description = "Order not found", content = @Content),
+            @ApiResponse(responseCode = "400", description = "Invalid status data")
+    })
+    public ResponseEntity<OrderResponse> updateOrderStatus(@PathVariable Long id,@RequestBody @Valid OrderStatusRequest req){
+        Optional<Order> box = orderService.updateStatus(id, req.getStatus());
+
+        if (box.isPresent()) {
+            Order found = box.get();
+            List<OrderItemResponse> items = new ArrayList<>();
+            for (OrderItem item : found.getItems()) {
+                items.add(new OrderItemResponse(item.getProduct().getId(), item.getProduct().getName(), item.getQuantity(), item.getPrice()));
+            }
+            OrderResponse resp = new OrderResponse(found.getId(), found.getCustomerName(), found.getDateOrder(), found.getStatus(), items);
+            return ResponseEntity.ok(resp);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
