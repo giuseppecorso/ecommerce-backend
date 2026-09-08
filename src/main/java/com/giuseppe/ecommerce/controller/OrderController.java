@@ -1,7 +1,6 @@
 package com.giuseppe.ecommerce.controller;
 
-import com.giuseppe.ecommerce.dto.OrderItemResponse;
-import com.giuseppe.ecommerce.dto.OrderResponse;
+import com.giuseppe.ecommerce.dto.*;
 import com.giuseppe.ecommerce.model.Order;
 import com.giuseppe.ecommerce.model.OrderItem;
 import com.giuseppe.ecommerce.service.OrderService;
@@ -10,10 +9,10 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,5 +50,30 @@ public class OrderController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping ("/api/orders")
+    @Operation (summary = "Create a new order")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Order created"),
+            @ApiResponse(responseCode = "400", description = "Invalid order data"),
+            @ApiResponse(responseCode = "404", description = "Invalid product id")
+    })
+    public ResponseEntity<OrderResponse> addOrder(@RequestBody @Valid OrderRequest req) {
+
+        Optional<Order> box = orderService.createOrder(req);
+
+        if (box.isPresent()) {
+            Order found = box.get();
+            List<OrderItemResponse> items = new ArrayList<>();
+            for (OrderItem item : found.getItems()) {
+                items.add(new OrderItemResponse(item.getProduct().getId(), item.getProduct().getName(), item.getQuantity(), item.getPrice()));
+            }
+            OrderResponse resp = new OrderResponse(found.getId(), found.getCustomerName(), found.getDateOrder(), found.getStatus(), items);
+            return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+
     }
 }
