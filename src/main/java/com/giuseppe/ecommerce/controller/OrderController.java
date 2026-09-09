@@ -1,9 +1,8 @@
 package com.giuseppe.ecommerce.controller;
 
 import com.giuseppe.ecommerce.dto.*;
+import com.giuseppe.ecommerce.mapper.OrderMapper;
 import com.giuseppe.ecommerce.model.Order;
-import com.giuseppe.ecommerce.model.OrderItem;
-import com.giuseppe.ecommerce.model.Product;
 import com.giuseppe.ecommerce.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -24,9 +23,11 @@ import java.util.Optional;
 public class OrderController {
 
     private final OrderService orderService;
+    private final OrderMapper orderMapper;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, OrderMapper orderMapper) {
         this.orderService = orderService;
+        this.orderMapper = orderMapper;
     }
 
     @GetMapping("/api/orders/{id}")
@@ -40,14 +41,7 @@ public class OrderController {
 
         if (box.isPresent()) {
             Order found = box.get();
-            List<OrderItemResponse> items = new ArrayList<>();
-            for (OrderItem item : found.getItems()) {
-                items.add(new OrderItemResponse(item.getProduct().getId(), item.getProduct().getName(), item.getQuantity(), item.getPrice()));
-            }
-
-            OrderResponse resp = new OrderResponse(found.getId(), found.getCustomerName(), found.getDateOrder(), found.getStatus(), items);
-
-            return ResponseEntity.ok(resp);
+            return ResponseEntity.ok(orderMapper.toResponse(found));
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -66,12 +60,7 @@ public class OrderController {
 
         if (box.isPresent()) {
             Order found = box.get();
-            List<OrderItemResponse> items = new ArrayList<>();
-            for (OrderItem item : found.getItems()) {
-                items.add(new OrderItemResponse(item.getProduct().getId(), item.getProduct().getName(), item.getQuantity(), item.getPrice()));
-            }
-            OrderResponse resp = new OrderResponse(found.getId(), found.getCustomerName(), found.getDateOrder(), found.getStatus(), items);
-            return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+            return ResponseEntity.status(HttpStatus.CREATED).body(orderMapper.toResponse(found));
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -85,13 +74,7 @@ public class OrderController {
         List<OrderResponse> responses = new ArrayList<>();
 
         for (Order o : orderService.getAllOrders()) {
-            List<OrderItemResponse> items = new ArrayList<>();
-            for (OrderItem orderItem : o.getItems()) {
-                OrderItemResponse item = new OrderItemResponse(orderItem.getProduct().getId(), orderItem.getProduct().getName(), orderItem.getQuantity(), orderItem.getPrice());
-                items.add(item);
-            }
-            OrderResponse resp = new OrderResponse(o.getId(), o.getCustomerName(), o.getDateOrder(), o.getStatus(), items);
-            responses.add(resp);
+           responses.add(orderMapper.toResponse(o));
         }
 
         return responses;
@@ -109,12 +92,7 @@ public class OrderController {
 
         if (box.isPresent()) {
             Order found = box.get();
-            List<OrderItemResponse> items = new ArrayList<>();
-            for (OrderItem item : found.getItems()) {
-                items.add(new OrderItemResponse(item.getProduct().getId(), item.getProduct().getName(), item.getQuantity(), item.getPrice()));
-            }
-            OrderResponse resp = new OrderResponse(found.getId(), found.getCustomerName(), found.getDateOrder(), found.getStatus(), items);
-            return ResponseEntity.ok(resp);
+            return ResponseEntity.ok(orderMapper.toResponse(found));
         } else {
             return ResponseEntity.notFound().build();
         }
