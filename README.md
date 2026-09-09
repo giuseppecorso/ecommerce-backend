@@ -119,3 +119,9 @@ PUT and DELETE are not available for orders. An order is a historical
 record: once placed, it must remain traceable. The only permitted change
 is its status (NEW, PAID, SHIPPED), exposed through a dedicated PATCH
 endpoint. Cancelling an order is a status change, not a deletion.
+
+Valid statuses are defined by an OrderStatus enum, not by free-form
+strings. The check lives in the service layer rather than in the request
+DTO: it is a domain rule, so every path that changes an order status
+goes through it, not just HTTP requests. An invalid value is rejected
+with 400 and a message listing the accepted values.

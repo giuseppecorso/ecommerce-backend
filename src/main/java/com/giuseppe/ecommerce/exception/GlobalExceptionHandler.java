@@ -25,4 +25,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errori);
     }
 
+    @ExceptionHandler(InvalidOrderStatusException.class)
+    public ResponseEntity<Map<String, String>> handleInvalidOrderStatusException(InvalidOrderStatusException ex){
+        HashMap<String, String> errori = new HashMap<>();
+
+        errori.put("status", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errori);
+    }
+
 }

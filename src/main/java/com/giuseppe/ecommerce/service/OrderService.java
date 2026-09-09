@@ -2,8 +2,10 @@ package com.giuseppe.ecommerce.service;
 
 import com.giuseppe.ecommerce.dto.OrderItemRequest;
 import com.giuseppe.ecommerce.dto.OrderRequest;
+import com.giuseppe.ecommerce.exception.InvalidOrderStatusException;
 import com.giuseppe.ecommerce.model.Order;
 import com.giuseppe.ecommerce.model.OrderItem;
+import com.giuseppe.ecommerce.model.OrderStatus;
 import com.giuseppe.ecommerce.model.Product;
 import com.giuseppe.ecommerce.repository.OrderItemRepository;
 import com.giuseppe.ecommerce.repository.OrderRepository;
@@ -65,6 +67,11 @@ public class OrderService {
     }
 
     public Optional<Order> updateStatus(Long id, String status) {
+        try {
+            OrderStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidOrderStatusException("Invalid order status: " + status + ". Accepted values are NEW, PAID, SHIPPED.");
+        }
         Optional<Order> order = orderRepository.findById(id);
         if (order.isPresent()) {
             Order found = order.get();
