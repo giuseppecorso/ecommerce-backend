@@ -33,6 +33,8 @@ learning project. Currently in active development.
 | GET    | /api/orders/{id}          | Get an order by id    | 200/404 |
 | POST   | /api/orders               | Create a new order    | 201/400/404 |
 | PATCH  | /api/orders/{id}/status   | Update order status   | 200/404/400 |
+| POST   | /api/customers            | Create a new customer | 201/400 |
+| GET    | /api/customers/{id}       | Get a customer by id  | 200/404 |
 
 ## API Documentation
 
