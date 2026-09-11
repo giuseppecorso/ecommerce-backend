@@ -47,6 +47,8 @@ Interactive API documentation is available at
 
 ### Prerequisites
 
+Required only when running without Docker:
+
 - JDK 21
 - PostgreSQL
 
@@ -69,6 +71,39 @@ Interactive API documentation is available at
    (on Windows: mvnw.cmd spring-boot:run)
 
 The API runs on http://localhost:8080
+
+## Running with Docker
+
+The only prerequisites are Docker and Docker Compose. No JDK, Maven or
+PostgreSQL installation is required: the application is built and run
+inside containers.
+
+    docker compose up --build
+
+This starts two containers: a PostgreSQL 18 database and the application
+itself. The API is available at `http://localhost:8080` and the Swagger UI
+at `http://localhost:8080/swagger-ui.html`. Database data is stored in a
+named volume, so it survives container restarts. To stop everything:
+
+    docker compose down
+
+### Notes on the setup
+
+The image is built in two stages. The first stage uses a Maven image to
+compile the project and produce the jar; the second stage starts from a
+JRE-only image and copies just the jar from the first one. Maven and the
+source code are left behind, which keeps the final image small.
+
+Inside the Compose network, containers reach each other by service name,
+so the application connects to `db:5432` rather than `localhost`. Inside a
+container, `localhost` means the container itself. The value is passed as
+the `SPRING_DATASOURCE_URL` environment variable, which overrides the one
+in `application.properties`: the same artifact runs unchanged both in
+Docker and from the IDE against a local PostgreSQL.
+
+The database container declares a healthcheck, and the application waits
+for it. Without it the application starts while PostgreSQL is still
+initializing and fails to obtain a connection.
 
 ## Example Requests
 
@@ -140,10 +175,7 @@ single test covering both would still tell me that something is broken,
 but not where.
 
 ## Roadmap
-
-- Order management
 - Payment module
-- Docker and deployment
 - Authentication and authorization (JWT)
 
 ## NOTE
