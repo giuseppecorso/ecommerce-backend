@@ -110,11 +110,41 @@ field: an id sent in the request body has nowhere to be mapped and is
 discarded. Outgoing JSON is built from a ProductResponse, so changes to
 the persistence model do not silently change the public API.
 
+## Testing
+
+    ./mvnw test
+
+The project is tested at two levels.
+
+**Unit tests — `OrderServiceTest`**
+Pure unit test of `OrderService`, running on plain JUnit 5 and Mockito
+with no Spring context. The three repositories are mocks, so nothing
+touches the database. It verifies the domain rule on order status: an
+unknown value is rejected, a valid one is persisted and returned.
+
+**Web layer slice tests — `CustomerControllerTest`**
+Slice test using `@WebMvcTest`, which loads only the target controller
+plus JSON serialization, validation and exception handling — no
+repositories, no database, no running server. The service is mocked. It
+asserts the HTTP status code and the JSON body for a valid request, and
+for an invalid one it asserts the 400 response and verifies that the
+service was never called.
+
+**Why two levels.** The two levels answer different questions. The
+service test tells me whether the domain rule is correct, regardless of
+how it is exposed; the controller test tells me whether the HTTP
+contract is correct, regardless of whether the logic behind it is right.
+Breaking the status rule turns the service test red and leaves the
+controller test green; changing a response code does the opposite. A
+single test covering both would still tell me that something is broken,
+but not where.
+
 ## Roadmap
 
 - Order management
-- Unit tests (JUnit)
 - Payment module
+- Docker and deployment
+- Authentication and authorization (JWT)
 
 ## NOTE
 PUT and DELETE are not available for orders. An order is a historical
