@@ -35,6 +35,50 @@ learning project. Currently in active development.
 | PATCH  | /api/orders/{id}/status   | Update order status   | 200/404/400 |
 | POST   | /api/customers            | Create a new customer | 201/400 |
 | GET    | /api/customers/{id}       | Get a customer by id  | 200/404 |
+| POST   | /api/auth/register        | Register a new user   | 201/400/409 |
+
+## Authentication
+
+The API uses HTTP Basic authentication, backed by Spring Security.
+Users are stored in the `users` table. Passwords are hashed with BCrypt
+and are never returned by the API.
+
+| Request                                   | Access                 |
+|-------------------------------------------|------------------------|
+| GET /api/products, GET /api/products/{id} | Public                 |
+| POST /api/auth/register                   | Public                 |
+| POST, PUT, DELETE /api/products           | ADMIN only             |
+| All other endpoints                       | Any authenticated user |
+
+A request without valid credentials receives 401 Unauthorized. An
+authenticated user without the required role receives 403 Forbidden.
+
+### Registration
+
+    curl -X POST http://localhost:8080/api/auth/register -H "Content-Type: application/json" -d "{\"username\": \"mario\", \"password\": \"password123\"}"
+
+Response — 201 Created:
+
+    {"id":3,"username":"mario","role":"USER"}
+
+Registration always assigns the USER role. `RegisterRequest` has no
+role field, so a client cannot register itself as ADMIN. The password
+must be at least 8 characters long. An existing username returns
+409 Conflict.
+
+### Test users
+
+On startup, `DataInitializer` creates two users if they do not exist
+yet:
+
+- `admin` / `admin123` — role ADMIN
+- `user` / `user123` — role USER
+
+These credentials are meant for local development only.
+
+### Authenticated request
+
+    curl -u admin:admin123 -X DELETE http://localhost:8080/api/products/3
 
 ## API Documentation
 
@@ -175,8 +219,8 @@ single test covering both would still tell me that something is broken,
 but not where.
 
 ## Roadmap
-- Payment module
-- Authentication and authorization (JWT)
+- JWT authentication
+- Public deployment
 
 ## NOTE
 PUT and DELETE are not available for orders. An order is a historical
