@@ -6,8 +6,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Optional;
-
 @Configuration
 public class DataInitializer {
 
@@ -16,6 +14,15 @@ public class DataInitializer {
         return args -> {
             if (userRepository.findByUsername("admin").isEmpty()) {
                 userService.registerUser("admin", "admin123", "ADMIN");
+            }
+        };
+    }
+
+    @Bean
+    public CommandLineRunner createUser(UserService userService, UserRepository userRepository) {
+        return args -> {
+            if (userRepository.findByUsername("user").isEmpty()) {
+                userService.registerUser("user", "user123", "USER");
             }
         };
     }
