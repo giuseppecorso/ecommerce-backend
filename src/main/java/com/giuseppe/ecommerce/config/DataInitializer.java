@@ -1,6 +1,5 @@
 package com.giuseppe.ecommerce.config;
 
-import com.giuseppe.ecommerce.model.User;
 import com.giuseppe.ecommerce.repository.UserRepository;
 import com.giuseppe.ecommerce.service.UserService;
 import org.springframework.boot.CommandLineRunner;
