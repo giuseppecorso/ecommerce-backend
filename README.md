@@ -39,7 +39,7 @@ traffic: the first request may take about a minute while it wakes up.
 | DELETE | /api/products/{id}         | Delete a product by id                   | 204/404         |
 | GET    | /api/orders                | Get orders: all for ADMIN, own for USER  | 200             |
 | GET    | /api/orders/{id}           | Get an order by id                       | 200/404         |
-| POST   | /api/orders                | Create a new order                       | 201/400/404     |
+| POST   | /api/orders                | Create a new order                       | 201/400/404/409 |
 | PATCH  | /api/orders/{id}/status    | Update order status (ADMIN only)         | 200/400/403/404 |
 | POST   | /api/customers             | Create a new customer                    | 201/400         |
 | GET    | /api/customers/{id}        | Get a customer by id                     | 200/404         |
@@ -263,6 +263,26 @@ Response — 400 Bad Request:
 Validation runs before the controller method is invoked. Field errors are
 collected by a @RestControllerAdvice handler and returned as a
 field-to-message map.
+
+## Order creation and stock
+
+Creating an order decreases the stock of every product it contains.
+If a product does not have enough stock, the request is rejected with
+409 Conflict:
+
+    {"stock":"Insufficient stock for product 3: requested 50, available 5"}
+
+409 rather than 400: the request is well-formed and passes validation,
+but it conflicts with the current state of the product.
+
+`createOrder` runs in a single transaction (`@Transactional`). Creating
+an order touches several rows: the order itself, one row per item, and
+the stock of each product. Without a transaction every save is
+committed immediately, so a failure on the second item left a
+half-created order in the database and the stock of the first product
+already decreased, while the client received an error. With the
+transaction, an exception rolls back every change: the order is saved
+completely or not at all.
 
 ## Request and response models
 
