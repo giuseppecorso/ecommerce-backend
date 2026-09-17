@@ -2,8 +2,11 @@ package com.giuseppe.ecommerce.service;
 
 import com.giuseppe.ecommerce.dto.OrderItemRequest;
 import com.giuseppe.ecommerce.dto.OrderRequest;
+import com.giuseppe.ecommerce.exception.InsufficientStockException;
 import com.giuseppe.ecommerce.exception.InvalidOrderStatusException;
 import com.giuseppe.ecommerce.model.Order;
+import com.giuseppe.ecommerce.model.Product;
+import com.giuseppe.ecommerce.model.User;
 import com.giuseppe.ecommerce.repository.OrderItemRepository;
 import com.giuseppe.ecommerce.repository.OrderRepository;
 import com.giuseppe.ecommerce.repository.ProductRepository;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,5 +69,60 @@ public class OrderServiceTest {
         Optional<Order> result = orderService.createOrder(orderRequest, "martina");
 
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void getOrderByIdReturnsOrderWhenUserIsOwner() {
+        User luigi = new User();
+        luigi.setUsername("luigi");
+
+        Order order = new Order();
+        order.setId(5L);
+        order.setUser(luigi);
+
+        Mockito.when(orderRepository.findById(5L)).thenReturn(Optional.of(order));
+
+        Optional<Order> result = orderService.getOrderById(5L, "luigi", false);
+
+        assertTrue(result.isPresent());
+        assertEquals(5L, result.get().getId());
+    }
+    @Test
+    void getOrderByIdReturnsEmptyWhenUserIsNotOwner() {
+        User luigi = new User();
+        luigi.setUsername("luigi");
+
+        Order order = new Order();
+        order.setId(5L);
+        order.setUser(luigi);
+
+        Mockito.when(orderRepository.findById(5L)).thenReturn(Optional.of(order));
+
+        Optional<Order> result = orderService.getOrderById(5L, "mario", false);
+
+        assertTrue(result.isEmpty());
+
+    }
+
+    @Test
+    void createOrderThrowsWhenStockIsInsufficient() {
+        Product polo = new Product(2L, "Polo", "Polo rossa", new BigDecimal("39.99"), 1);
+        Mockito.when(productRepository.findById(2L)).thenReturn(Optional.of(polo));
+
+        User mario = new User();
+        mario.setUsername("mario");
+        Mockito.when(userRepository.findByUsername("mario")).thenReturn(Optional.of(mario));
+
+        Mockito.when(orderRepository.save(Mockito.any(Order.class))).thenReturn(new Order());
+
+        OrderItemRequest itemRequest = new OrderItemRequest();
+        itemRequest.setProductId(2L);
+        itemRequest.setQuantity(5);
+
+        OrderRequest orderRequest = new OrderRequest();
+        orderRequest.setItems(List.of(itemRequest));
+
+        assertThrows(InsufficientStockException.class, () -> orderService.createOrder(orderRequest, "mario"));
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any());
     }
 }

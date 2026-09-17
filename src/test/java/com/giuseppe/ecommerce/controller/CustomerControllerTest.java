@@ -1,18 +1,23 @@
 package com.giuseppe.ecommerce.controller;
 
+import com.giuseppe.ecommerce.config.SecurityConfig;
 import com.giuseppe.ecommerce.model.Customer;
 import com.giuseppe.ecommerce.service.CustomerService;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 
 @WebMvcTest(CustomerController.class)
+@Import(SecurityConfig.class)
+@WithMockUser
 public class CustomerControllerTest {
     @Autowired
     MockMvc mockMvc;
