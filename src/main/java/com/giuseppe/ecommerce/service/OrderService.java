@@ -2,12 +2,14 @@ package com.giuseppe.ecommerce.service;
 
 import com.giuseppe.ecommerce.dto.OrderItemRequest;
 import com.giuseppe.ecommerce.dto.OrderRequest;
+import com.giuseppe.ecommerce.exception.InsufficientStockException;
 import com.giuseppe.ecommerce.exception.InvalidOrderStatusException;
 import com.giuseppe.ecommerce.model.*;
 import com.giuseppe.ecommerce.repository.OrderItemRepository;
 import com.giuseppe.ecommerce.repository.OrderRepository;
 import com.giuseppe.ecommerce.repository.ProductRepository;
 import com.giuseppe.ecommerce.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -44,6 +46,7 @@ public class OrderService {
         }
     }
 
+    @Transactional
     public Optional<Order> createOrder(OrderRequest req, String username) {
         for (OrderItemRequest itemReq : req.getItems()) {
             Optional<Product> box = productRepository.findById(itemReq.getProductId());
@@ -62,6 +65,13 @@ public class OrderService {
 
         for (OrderItemRequest itemReq : req.getItems()) {
             Product product = productRepository.findById(itemReq.getProductId()).get();
+            if (product.getStockQuantity() < itemReq.getQuantity()) {
+                throw new InsufficientStockException("Insufficient stock for product " + product.getId()
+                        + ": requested " + itemReq.getQuantity()
+                        + ", available " + product.getStockQuantity());
+            }
+            product.setStockQuantity(product.getStockQuantity() - itemReq.getQuantity());
+            productRepository.save(product);
             OrderItem orderItem = new OrderItem();
             orderItem.setOrder(saved);
             orderItem.setProduct(product);
