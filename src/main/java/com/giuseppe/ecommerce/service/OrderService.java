@@ -3,13 +3,11 @@ package com.giuseppe.ecommerce.service;
 import com.giuseppe.ecommerce.dto.OrderItemRequest;
 import com.giuseppe.ecommerce.dto.OrderRequest;
 import com.giuseppe.ecommerce.exception.InvalidOrderStatusException;
-import com.giuseppe.ecommerce.model.Order;
-import com.giuseppe.ecommerce.model.OrderItem;
-import com.giuseppe.ecommerce.model.OrderStatus;
-import com.giuseppe.ecommerce.model.Product;
+import com.giuseppe.ecommerce.model.*;
 import com.giuseppe.ecommerce.repository.OrderItemRepository;
 import com.giuseppe.ecommerce.repository.OrderRepository;
 import com.giuseppe.ecommerce.repository.ProductRepository;
+import com.giuseppe.ecommerce.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,12 +19,14 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final OrderItemRepository orderItemRepository;
+    private final UserRepository userRepository;
 
-    public OrderService(OrderRepository orderRepository, ProductRepository productRepository, OrderItemRepository orderItemRepository) {
+    public OrderService(OrderRepository orderRepository, ProductRepository productRepository, OrderItemRepository orderItemRepository, UserRepository userRepository) {
 
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.orderItemRepository = orderItemRepository;
+        this.userRepository = userRepository;
     }
 
     public Optional<Order> getOrderById(Long id) {
@@ -34,15 +34,17 @@ public class OrderService {
         return orderRepository.findById(id);
     }
 
-    public Optional<Order> createOrder(OrderRequest req) {
+    public Optional<Order> createOrder(OrderRequest req, String username) {
         for (OrderItemRequest itemReq : req.getItems()) {
             Optional<Product> box = productRepository.findById(itemReq.getProductId());
             if (box.isEmpty())
                 return Optional.empty();
         }
 
+        User user = userRepository.findByUsername(username).orElseThrow();
+
         Order order = new Order();
-        order.setCustomerName(req.getCustomerName());
+        order.setUser(user);
         order.setDateOrder(LocalDateTime.now());
         order.setStatus("NEW");
 

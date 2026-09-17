@@ -16,7 +16,7 @@ public class OrderMapper {
         for (OrderItem item : order.getItems()) {
             items.add(new OrderItemResponse(item.getProduct().getId(), item.getProduct().getName(), item.getQuantity(), item.getPrice()));
         }
-        OrderResponse resp = new OrderResponse(order.getId(), order.getCustomerName(), order.getDateOrder(), order.getStatus(), items);
+        OrderResponse resp = new OrderResponse(order.getId(), order.getUser().getUsername(), order.getDateOrder(), order.getStatus(), items);
         return resp;
     }
 }

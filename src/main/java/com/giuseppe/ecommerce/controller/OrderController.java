@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -54,9 +55,9 @@ public class OrderController {
             @ApiResponse(responseCode = "400", description = "Invalid order data"),
             @ApiResponse(responseCode = "404", description = "Invalid product id")
     })
-    public ResponseEntity<OrderResponse> addOrder(@RequestBody @Valid OrderRequest req) {
+    public ResponseEntity<OrderResponse> addOrder(@RequestBody @Valid OrderRequest req, Authentication authentication) {
 
-        Optional<Order> box = orderService.createOrder(req);
+        Optional<Order> box = orderService.createOrder(req, authentication.getName());
 
         if (box.isPresent()) {
             Order found = box.get();

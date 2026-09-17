@@ -8,20 +8,10 @@ import java.util.List;
 
 public class OrderRequest {
 
-    @NotBlank
-    private String customerName;
     @NotEmpty @Valid
     private List<OrderItemRequest> items;
 
     public OrderRequest() {    }
-
-    public String getCustomerName() {
-        return customerName;
-    }
-
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
-    }
 
     public List<OrderItemRequest> getItems() {
         return items;

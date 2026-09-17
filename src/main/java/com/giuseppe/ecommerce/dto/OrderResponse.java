@@ -6,14 +6,14 @@ import java.util.List;
 
 public class OrderResponse {
     private Long id;
-    private String customerName;
+    private String username;
     private LocalDateTime dateOrder;
     private String status;
     private List<OrderItemResponse> items;
 
-    public OrderResponse(Long id, String customerName, LocalDateTime dateOrder, String status, List<OrderItemResponse> items) {
+    public OrderResponse(Long id, String username, LocalDateTime dateOrder, String status, List<OrderItemResponse> items) {
         this.id = id;
-        this.customerName = customerName;
+        this.username = username;
         this.dateOrder = dateOrder;
         this.status = status;
         this.items = items;
@@ -23,8 +23,8 @@ public class OrderResponse {
         return id;
     }
 
-    public String getCustomerName() {
-        return customerName;
+    public String getUsername() {
+        return username;
     }
 
     public LocalDateTime getDateOrder() {

@@ -7,6 +7,7 @@ import com.giuseppe.ecommerce.model.Order;
 import com.giuseppe.ecommerce.repository.OrderItemRepository;
 import com.giuseppe.ecommerce.repository.OrderRepository;
 import com.giuseppe.ecommerce.repository.ProductRepository;
+import com.giuseppe.ecommerce.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -21,13 +22,15 @@ public class OrderServiceTest {
     ProductRepository productRepository;
     OrderItemRepository orderItemRepository;
     OrderService orderService;
+    UserRepository userRepository;
 
     @BeforeEach
     void setup() {
         orderRepository = Mockito.mock(OrderRepository.class);
         productRepository = Mockito.mock(ProductRepository.class);
         orderItemRepository = Mockito.mock(OrderItemRepository.class);
-        orderService = new OrderService(orderRepository, productRepository, orderItemRepository);
+        userRepository = Mockito.mock(UserRepository.class);
+        orderService = new OrderService(orderRepository, productRepository, orderItemRepository,  userRepository);
     }
 
     @Test
@@ -39,7 +42,6 @@ public class OrderServiceTest {
     void updateStatusReturnsUpdatedOrderWhenStatusIsValid() {
         Order order = new Order();
         order.setId(1L);
-        order.setCustomerName("Giuseppe");
         order.setStatus("NEW");
 
         Mockito.when(orderRepository.findById(1L)).thenReturn(Optional.of(order));
@@ -58,10 +60,9 @@ public class OrderServiceTest {
         orderItemRequest.setQuantity(1);
 
         OrderRequest  orderRequest = new OrderRequest();
-        orderRequest.setCustomerName("Martina");
         orderRequest.setItems(List.of(orderItemRequest));
 
-        Optional<Order> result = orderService.createOrder(orderRequest);
+        Optional<Order> result = orderService.createOrder(orderRequest, "martina");
 
         assertTrue(result.isEmpty());
     }

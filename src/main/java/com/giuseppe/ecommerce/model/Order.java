@@ -12,7 +12,8 @@ public class Order {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String customerName;
+    @ManyToOne
+    private User user;
     private LocalDateTime dateOrder;
     private String status;
     @OneToMany(mappedBy = "order")
@@ -26,9 +27,6 @@ public class Order {
         return id;
     }
 
-    public String getCustomerName() {
-        return customerName;
-    }
 
     public LocalDateTime getDateOrder() {
         return dateOrder;
@@ -46,9 +44,6 @@ public class Order {
         this.id = id;
     }
 
-    public void setCustomerName(String customerName) {
-        this.customerName = customerName;
-    }
 
     public void setDateOrder(LocalDateTime dateOrder) {
         this.dateOrder = dateOrder;
@@ -56,5 +51,13 @@ public class Order {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }
