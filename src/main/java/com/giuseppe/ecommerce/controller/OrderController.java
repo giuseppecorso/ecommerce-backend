@@ -13,6 +13,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -37,8 +38,8 @@ public class OrderController {
             @ApiResponse(responseCode = "200", description = "Operation successful"),
             @ApiResponse(responseCode = "404", description = "Order not found", content = @Content)
     })
-    public ResponseEntity<OrderResponse> getOrder(@PathVariable Long id) {
-        Optional<Order> box = orderService.getOrderById(id);
+    public ResponseEntity<OrderResponse> getOrder(@PathVariable Long id, Authentication authentication) {
+        Optional<Order> box = orderService.getOrderById(id, authentication.getName(), isAdmin(authentication));
 
         if (box.isPresent()) {
             Order found = box.get();
@@ -69,12 +70,14 @@ public class OrderController {
     }
 
     @GetMapping("/api/orders")
-    @Operation(summary = "Get all orders")
-    public List<OrderResponse> getOrders() {
+    @Operation(summary = "Get orders: all for ADMIN, own orders for USER")
+    public List<OrderResponse> getOrders(Authentication authentication) {
+
+        List<Order> orders = orderService.getOrders(authentication.getName(), isAdmin(authentication));
 
         List<OrderResponse> responses = new ArrayList<>();
 
-        for (Order o : orderService.getAllOrders()) {
+        for (Order o : orders) {
            responses.add(orderMapper.toResponse(o));
         }
 
@@ -86,7 +89,8 @@ public class OrderController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Order status updated"),
             @ApiResponse(responseCode = "404", description = "Order not found", content = @Content),
-            @ApiResponse(responseCode = "400", description = "Invalid status data")
+            @ApiResponse(responseCode = "400", description = "Invalid status data"),
+            @ApiResponse(responseCode = "403", description = "Only ADMIN can update order status")
     })
     public ResponseEntity<OrderResponse> updateOrderStatus(@PathVariable Long id,@RequestBody @Valid OrderStatusRequest req){
         Optional<Order> box = orderService.updateStatus(id, req.getStatus());
@@ -97,5 +101,14 @@ public class OrderController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        for (GrantedAuthority authority : authentication.getAuthorities()) {
+            if (authority.getAuthority().equals("ROLE_ADMIN")) {
+                return true;
+            }
+        }
+        return false;
     }
 }

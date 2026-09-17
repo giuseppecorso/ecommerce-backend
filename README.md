@@ -30,20 +30,20 @@ traffic: the first request may take about a minute while it wakes up.
 
 ## API Endpoints
 
-| Method | Path                      | Description            | Status      |
-|--------|---------------------------|------------------------|-------------|
-| GET    | /api/products             | Get all products       | 200         |
-| GET    | /api/products/{id}        | Get a product by id    | 200/404     |
-| POST   | /api/products             | Create a new product   | 201         |
-| PUT    | /api/products/{id}        | Update a product by id | 200/404     |
-| DELETE | /api/products/{id}        | Delete a product by id | 204/404     |
-| GET    | /api/orders               | Get all orders         | 200         |
-| GET    | /api/orders/{id}          | Get an order by id     | 200/404     |
-| POST   | /api/orders               | Create a new order     | 201/400/404 |
-| PATCH  | /api/orders/{id}/status   | Update order status    | 200/404/400 |
-| POST   | /api/customers            | Create a new customer  | 201/400     |
-| GET    | /api/customers/{id}       | Get a customer by id   | 200/404     |
-| POST   | /api/auth/register        | Register a new user    | 201/400/409 |
+| Method | Path                       | Description                              | Status          |
+|--------|----------------------------|------------------------------------------|-----------------|
+| GET    | /api/products              | Get all products                         | 200             |
+| GET    | /api/products/{id}         | Get a product by id                      | 200/404         |
+| POST   | /api/products              | Create a new product                     | 201             |
+| PUT    | /api/products/{id}         | Update a product by id                   | 200/404         |
+| DELETE | /api/products/{id}         | Delete a product by id                   | 204/404         |
+| GET    | /api/orders                | Get orders: all for ADMIN, own for USER  | 200             |
+| GET    | /api/orders/{id}           | Get an order by id                       | 200/404         |
+| POST   | /api/orders                | Create a new order                       | 201/400/404     |
+| PATCH  | /api/orders/{id}/status    | Update order status (ADMIN only)         | 200/400/403/404 |
+| POST   | /api/customers             | Create a new customer                    | 201/400         |
+| GET    | /api/customers/{id}        | Get a customer by id                     | 200/404         |
+| POST   | /api/auth/register         | Register a new user                      | 201/400/409     |
 
 ## Authentication
 
@@ -51,13 +51,15 @@ The API uses HTTP Basic authentication, backed by Spring Security.
 Users are stored in the `users` table. Passwords are hashed with BCrypt
 and are never returned by the API.
 
-| Request                                   | Access                 |
-|-------------------------------------------|------------------------|
-| GET /api/products, GET /api/products/{id} | Public                 |
-| POST /api/auth/register                   | Public                 |
-| Swagger UI and OpenAPI docs               | Public                 |
-| POST, PUT, DELETE /api/products           | ADMIN only             |
-| All other endpoints                       | Any authenticated user |
+| Request                                  | Access                                   |
+|------------------------------------------|------------------------------------------|
+| GET /api/products, GET /api/products/{id} | Public                                   |
+| POST /api/auth/register                  | Public                                   |
+| Swagger UI and OpenAPI docs              | Public                                   |
+| POST, PUT, DELETE /api/products          | ADMIN only                               |
+| PATCH /api/orders/{id}/status            | ADMIN only                               |
+| GET /api/orders, GET /api/orders/{id}    | Authenticated: USER sees own orders only |
+| All other endpoints                      | Any authenticated user                   |
 
 A request without valid credentials receives 401 Unauthorized. An
 authenticated user without the required role receives 403 Forbidden.
@@ -89,6 +91,29 @@ live API, register your own user: it gets the USER role.
 ### Authenticated request
 
     curl -u admin:<admin-password> -X DELETE http://localhost:8080/api/products/3
+
+### Order ownership and visibility
+
+The owner of an order is taken from the credentials of the request,
+never from the request body: a client cannot create an order in
+someone else's name.
+
+A USER sees only their own orders; an ADMIN sees all of them. The
+service receives the username and whether the caller is an ADMIN, not
+the security objects themselves, so the rule can be unit tested
+without Spring Security.
+
+Requesting another user's order by id returns 404, not 403. A 403
+would confirm that the order exists, and by trying consecutive ids a
+user could work out how many orders the shop has. With 404, an order
+that belongs to someone else is indistinguishable from one that does
+not exist.
+
+Changing an order status is reserved to ADMIN. A status records a
+fact of the process (payment received, parcel shipped), so it cannot
+be set by the customer, not even on their own order. This rule depends
+only on the role, so it lives in `SecurityConfig` and returns 403 for
+any id.
 
 ## API Documentation
 
@@ -204,7 +229,7 @@ creates the two initial users.
 
     curl -X POST https://ecommerce-backend-bzwc.onrender.com/api/auth/register -H "Content-Type: application/json" -d "{\"username\": \"yourname\", \"password\": \"password123\"}"
 
-A registered user can read orders and customers, but creating a
+A registered user can read their own orders and customers, but creating a
 product returns 403 Forbidden: product changes are reserved to ADMIN.
 
 ## Example Requests
@@ -285,7 +310,8 @@ but not where.
 PUT and DELETE are not available for orders. An order is a historical
 record: once placed, it must remain traceable. The only permitted change
 is its status (NEW, PAID, SHIPPED), exposed through a dedicated PATCH
-endpoint. Cancelling an order is a status change, not a deletion.
+endpoint reserved to ADMIN. Cancelling an order is a status change, 
+not a deletion.
 
 Valid statuses are defined by an OrderStatus enum, not by free-form
 strings. The check lives in the service layer rather than in the request

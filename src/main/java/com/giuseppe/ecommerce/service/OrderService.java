@@ -29,9 +29,19 @@ public class OrderService {
         this.userRepository = userRepository;
     }
 
-    public Optional<Order> getOrderById(Long id) {
+    public Optional<Order> getOrderById(Long id, String username, boolean isAdmin) {
 
-        return orderRepository.findById(id);
+        Optional<Order> order = orderRepository.findById(id);
+
+        if (order.isEmpty()) {
+            return Optional.empty();
+        } else if (isAdmin) {
+            return order;
+        } else if (order.get().getUser().getUsername().equals(username)) {
+            return order;
+        } else  {
+            return Optional.empty();
+        }
     }
 
     public Optional<Order> createOrder(OrderRequest req, String username) {
@@ -64,8 +74,12 @@ public class OrderService {
         return Optional.of(saved);
     }
 
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
+    public List<Order> getOrders(String username, boolean isAdmin) {
+        if (isAdmin) {
+            return orderRepository.findAll();
+        } else  {
+            return orderRepository.findByUserUsername(username);
+        }
     }
 
     public Optional<Order> updateStatus(Long id, String status) {
