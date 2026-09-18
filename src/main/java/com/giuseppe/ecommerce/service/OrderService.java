@@ -9,8 +9,8 @@ import com.giuseppe.ecommerce.repository.OrderItemRepository;
 import com.giuseppe.ecommerce.repository.OrderRepository;
 import com.giuseppe.ecommerce.repository.ProductRepository;
 import com.giuseppe.ecommerce.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
