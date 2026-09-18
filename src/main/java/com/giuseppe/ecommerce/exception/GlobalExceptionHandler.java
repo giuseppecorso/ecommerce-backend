@@ -2,6 +2,7 @@ package com.giuseppe.ecommerce.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -39,6 +40,13 @@ public class GlobalExceptionHandler {
         HashMap<String, String> errori = new HashMap<>();
         errori.put("stock", ex.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errori);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Map<String, String>> handleAuthenticationException(AuthenticationException ex){
+        HashMap<String, String> errori = new HashMap<>();
+        errori.put("error", "Invalid username or password");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errori);
     }
 
 }

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -23,9 +24,11 @@ public class AuthControllerTest {
     MockMvc mockMvc;
     @MockitoBean
     UserService userService;
+    @MockitoBean
+    JwtEncoder jwtEncoder;
 
     @Test
-    void registerReturns409WhenUsernameAlreadyExists () throws Exception {
+    void registerReturns409WhenUsernameAlreadyExists() throws Exception {
         Mockito.when(userService.registerUser(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(Optional.empty());
 

@@ -22,7 +22,7 @@ traffic: the first request may take about a minute while it wakes up.
 - Java 21
 - Spring Boot
 - Spring Data JPA / Hibernate
-- Spring Security
+- Spring Security (HTTP Basic, JWT)
 - PostgreSQL
 - Maven
 - Docker
@@ -44,17 +44,21 @@ traffic: the first request may take about a minute while it wakes up.
 | POST   | /api/customers             | Create a new customer                    | 201/400         |
 | GET    | /api/customers/{id}        | Get a customer by id                     | 200/404         |
 | POST   | /api/auth/register         | Register a new user                      | 201/400/409     |
+| POST   | /api/auth/login            | Log in and get a JWT                     | 200/400/401     |
 
 ## Authentication
 
 The API uses HTTP Basic authentication, backed by Spring Security.
 Users are stored in the `users` table. Passwords are hashed with BCrypt
-and are never returned by the API.
+and are never returned by the API. A login endpoint already issues JWT
+tokens (see below); accepting them on the protected endpoints is the
+next step.
 
 | Request                                  | Access                                   |
 |------------------------------------------|------------------------------------------|
 | GET /api/products, GET /api/products/{id} | Public                                   |
 | POST /api/auth/register                  | Public                                   |
+| POST /api/auth/login                     | Public                                   |
 | Swagger UI and OpenAPI docs              | Public                                   |
 | POST, PUT, DELETE /api/products          | ADMIN only                               |
 | PATCH /api/orders/{id}/status            | ADMIN only                               |
@@ -76,6 +80,39 @@ Registration always assigns the USER role. `RegisterRequest` has no
 role field, so a client cannot register itself as ADMIN. The password
 must be at least 8 characters long. An existing username returns
 409 Conflict.
+
+### Login and JWT
+
+    curl -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d "{\"username\": \"mario\", \"password\": \"password123\"}"
+
+Response — 200 OK:
+
+    {"token":"eyJhbGciOiJIUzI1NiJ9..."}
+
+Credentials are checked by Spring Security's `AuthenticationManager`,
+the same component that validates HTTP Basic requests. On success the
+API returns a JWT signed with HS256, valid for one hour. It carries the
+username (`sub`) and the user's roles (`roles`).
+
+The payload of a JWT is encoded, not encrypted: anyone holding the
+token can read it. The signature only guarantees that it has not been
+modified. For this reason the token never contains the password or
+other sensitive data.
+
+The signing key is read from the `JWT_SECRET` environment variable
+(at least 32 characters, as required by HS256). It is never in the
+source code: whoever holds it can issue valid tokens.
+
+Wrong credentials return 401 with the same message whether the
+username or the password is wrong:
+
+    {"error":"Invalid username or password"}
+
+A different message for an unknown username would let an attacker
+find out which accounts exist and focus on guessing their passwords.
+
+The token is issued but not yet accepted by the protected endpoints,
+which still use HTTP Basic. Accepting it is the next step.
 
 ### Initial users
 
@@ -145,9 +182,10 @@ Required only when running without Docker:
 
 3. Set these environment variables:
 
-   - `DB_PASSWORD` — your local PostgreSQL password
-   - `ADMIN_PASSWORD` — password for the initial admin user
-   - `USER_PASSWORD` — password for the initial regular user
+    - `DB_PASSWORD` — your local PostgreSQL password
+    - `ADMIN_PASSWORD` — password for the initial admin user
+    - `USER_PASSWORD` — password for the initial regular user
+    - `JWT_SECRET` — key that signs the JWT tokens, at least 32 characters
 
 4. Start the application:
 
@@ -163,8 +201,9 @@ The only prerequisites are Docker and Docker Compose. No JDK, Maven or
 PostgreSQL installation is required: the application is built and run
 inside containers.
 
-Compose passes `ADMIN_PASSWORD` and `USER_PASSWORD` from your shell to
-the application container, so set both before starting. Then:
+Compose passes `ADMIN_PASSWORD`, `USER_PASSWORD` and `JWT_SECRET` from
+your shell to the application container, so set all three before
+starting. Then:
 
     docker compose up --build
 
@@ -216,6 +255,7 @@ Render service receives these environment variables:
 | `SPRING_DATASOURCE_PASSWORD` | Database password                               |
 | `ADMIN_PASSWORD`             | Password of the initial admin user              |
 | `USER_PASSWORD`              | Password of the initial regular user            |
+| `JWT_SECRET`                 | Key that signs JWT tokens (at least 32 characters) |
 | `PORT`                       | Port Render routes traffic to (8080)            |
 
 The `SPRING_DATASOURCE_*` variables override `application.properties`,
@@ -228,6 +268,8 @@ creates the two initial users.
     curl https://ecommerce-backend-bzwc.onrender.com/api/products
 
     curl -X POST https://ecommerce-backend-bzwc.onrender.com/api/auth/register -H "Content-Type: application/json" -d "{\"username\": \"yourname\", \"password\": \"password123\"}"
+
+    curl -X POST https://ecommerce-backend-bzwc.onrender.com/api/auth/login -H "Content-Type: application/json" -d "{\"username\": \"yourname\", \"password\": \"password123\"}"
 
 A registered user can read their own orders and customers, but creating a
 product returns 403 Forbidden: product changes are reserved to ADMIN.
@@ -349,12 +391,17 @@ controller tests green; changing a response code does the opposite. A
 single test covering both would still tell me that something is
 broken, but not where.
 
+## Roadmap
+
+- Accept the JWT on protected endpoints, replacing HTTP Basic
+- CORS configuration for the Angular frontend
+
 ## NOTE
 
 PUT and DELETE are not available for orders. An order is a historical
 record: once placed, it must remain traceable. The only permitted change
 is its status (NEW, PAID, SHIPPED), exposed through a dedicated PATCH
-endpoint reserved to ADMIN. Cancelling an order is a status change, 
+endpoint reserved to ADMIN. Cancelling an order is a status change,
 not a deletion.
 
 Valid statuses are defined by an OrderStatus enum, not by free-form
