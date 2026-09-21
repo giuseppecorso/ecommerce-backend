@@ -22,7 +22,7 @@ traffic: the first request may take about a minute while it wakes up.
 - Java 21
 - Spring Boot
 - Spring Data JPA / Hibernate
-- Spring Security (HTTP Basic, JWT)
+- Spring Security (JWT with OAuth2 Resource Server, BCrypt)
 - PostgreSQL
 - Maven
 - Docker
@@ -48,11 +48,12 @@ traffic: the first request may take about a minute while it wakes up.
 
 ## Authentication
 
-The API uses HTTP Basic authentication, backed by Spring Security.
-Users are stored in the `users` table. Passwords are hashed with BCrypt
-and are never returned by the API. A login endpoint already issues JWT
-tokens (see below); accepting them on the protected endpoints is the
-next step.
+The API uses stateless JWT authentication, built on Spring Security's
+OAuth2 Resource Server support. A client logs in once with username
+and password, receives a signed token, and sends it on every following
+request in the `Authorization: Bearer ...` header. Users are stored in
+the `users` table. Passwords are hashed with BCrypt and are never
+returned by the API.
 
 | Request                                  | Access                                   |
 |------------------------------------------|------------------------------------------|
@@ -65,7 +66,7 @@ next step.
 | GET /api/orders, GET /api/orders/{id}    | Authenticated: USER sees own orders only |
 | All other endpoints                      | Any authenticated user                   |
 
-A request without valid credentials receives 401 Unauthorized. An
+A request without a valid token receives 401 Unauthorized. An
 authenticated user without the required role receives 403 Forbidden.
 
 ### Registration
@@ -89,10 +90,9 @@ Response — 200 OK:
 
     {"token":"eyJhbGciOiJIUzI1NiJ9..."}
 
-Credentials are checked by Spring Security's `AuthenticationManager`,
-the same component that validates HTTP Basic requests. On success the
-API returns a JWT signed with HS256, valid for one hour. It carries the
-username (`sub`) and the user's roles (`roles`).
+Credentials are checked by Spring Security's `AuthenticationManager`.
+On success the API returns a JWT signed with HS256, valid for one
+hour. It carries the username (`sub`) and the user's roles (`roles`).
 
 The payload of a JWT is encoded, not encrypted: anyone holding the
 token can read it. The signature only guarantees that it has not been
@@ -101,7 +101,8 @@ other sensitive data.
 
 The signing key is read from the `JWT_SECRET` environment variable
 (at least 32 characters, as required by HS256). It is never in the
-source code: whoever holds it can issue valid tokens.
+source code: whoever holds it can issue valid tokens, including one
+for an ADMIN, without knowing any password.
 
 Wrong credentials return 401 with the same message whether the
 username or the password is wrong:
@@ -111,8 +112,29 @@ username or the password is wrong:
 A different message for an unknown username would let an attacker
 find out which accounts exist and focus on guessing their passwords.
 
-The token is issued but not yet accepted by the protected endpoints,
-which still use HTTP Basic. Accepting it is the next step.
+### Using the token
+
+    curl http://localhost:8080/api/orders -H "Authorization: Bearer eyJhbGciOiJIUzI1NiJ9..."
+
+This is the path of a request carrying a token. The Spring Security
+filter chain reads the `Authorization` header and extracts the token.
+The `JwtDecoder` recomputes the signature with the same secret used at
+login and checks the expiry: if either check fails, the request stops
+with 401. A `JwtAuthenticationConverter` then builds the authenticated
+user: the username from `sub`, the roles from the `roles` claim.
+Finally the access rules in `SecurityConfig` are applied, and a valid
+token without the required role gets 403. The controller receives the
+`Authentication` object and reads the username with `getName()`.
+
+The converter is configured with the `roles` claim and an empty
+prefix. The defaults would look for a `scope` claim and add a
+`SCOPE_` prefix, but the roles in the token already start with
+`ROLE_`, which is what `hasRole("ADMIN")` expects.
+
+The database is not queried to authenticate a request: the password
+is checked once, at login, and after that the signature is enough.
+The flip side is that a token cannot be revoked: it stays valid until
+it expires, one hour after login.
 
 ### Initial users
 
@@ -125,15 +147,11 @@ the application does not start.
 The passwords of the public deployment are not published. To try the
 live API, register your own user: it gets the USER role.
 
-### Authenticated request
-
-    curl -u admin:<admin-password> -X DELETE http://localhost:8080/api/products/3
-
 ### Order ownership and visibility
 
-The owner of an order is taken from the credentials of the request,
-never from the request body: a client cannot create an order in
-someone else's name.
+The owner of an order is taken from the token of the request, never
+from the request body: a client cannot create an order in someone
+else's name.
 
 A USER sees only their own orders; an ADMIN sees all of them. The
 service receives the username and whether the caller is an ADMIN, not
@@ -151,6 +169,25 @@ fact of the process (payment received, parcel shipped), so it cannot
 be set by the customer, not even on their own order. This rule depends
 only on the role, so it lives in `SecurityConfig` and returns 403 for
 any id.
+
+## CORS
+
+The Angular frontend runs on `http://localhost:4200`, a different
+origin from the API on port 8080. Browsers block a page from reading
+responses from another origin unless the server explicitly allows it.
+`SecurityConfig` enables CORS for `/api/**`, allowing that origin, the
+methods GET, POST, PUT, PATCH and DELETE, and the `Authorization` and
+`Content-Type` headers. A request from any other origin is refused
+with 403.
+
+CORS is configured inside the security chain. Before a request with an
+`Authorization` header, the browser sends a preflight `OPTIONS`
+request without the token. Handled by the security chain, the
+preflight gets its answer before the authentication checks, instead
+of a 401.
+
+CORS is enforced by browsers only: curl and other non-browser clients
+are not affected by it.
 
 ## API Documentation
 
@@ -271,14 +308,21 @@ creates the two initial users.
 
     curl -X POST https://ecommerce-backend-bzwc.onrender.com/api/auth/login -H "Content-Type: application/json" -d "{\"username\": \"yourname\", \"password\": \"password123\"}"
 
+Then send the token returned by the login on the protected endpoints:
+
+    curl https://ecommerce-backend-bzwc.onrender.com/api/orders -H "Authorization: Bearer <token>"
+
 A registered user can read their own orders and customers, but creating a
 product returns 403 Forbidden: product changes are reserved to ADMIN.
 
 ## Example Requests
 
+The examples below need an ADMIN token: log in as `admin` and put the
+returned token in place of `<admin-token>`.
+
 ### Create a product
 
-    curl -u admin:<admin-password> -X POST http://localhost:8080/api/products -H "Content-Type: application/json" -d "{\"name\": \"Felpa Adidas\", \"description\": \"Felpa con cappuccio nera\", \"price\": 39.99, \"stockQuantity\": 5}"
+    curl -X POST http://localhost:8080/api/products -H "Authorization: Bearer <admin-token>" -H "Content-Type: application/json" -d "{\"name\": \"Felpa Adidas\", \"description\": \"Felpa con cappuccio nera\", \"price\": 39.99, \"stockQuantity\": 5}"
 
 Response — 201 Created:
 
@@ -286,7 +330,7 @@ Response — 201 Created:
 
 ### Update a product
 
-    curl -u admin:<admin-password> -X PUT http://localhost:8080/api/products/3 -H "Content-Type: application/json" -d "{\"name\": \"Felpa Adidas\", \"description\": \"Felpa con cappuccio blu\", \"price\": 34.99, \"stockQuantity\": 8}"
+    curl -X PUT http://localhost:8080/api/products/3 -H "Authorization: Bearer <admin-token>" -H "Content-Type: application/json" -d "{\"name\": \"Felpa Adidas\", \"description\": \"Felpa con cappuccio blu\", \"price\": 34.99, \"stockQuantity\": 8}"
 
 Response — 200 OK:
 
@@ -296,7 +340,7 @@ The id comes from the URL, not from the request body.
 
 ### Invalid input
 
-    curl -u admin:<admin-password> -X POST http://localhost:8080/api/products -H "Content-Type: application/json" -d "{\"name\": \"\", \"description\": \"test\", \"price\": -5, \"stockQuantity\": -1}"
+    curl -X POST http://localhost:8080/api/products -H "Authorization: Bearer <admin-token>" -H "Content-Type: application/json" -d "{\"name\": \"\", \"description\": \"test\", \"price\": -5, \"stockQuantity\": -1}"
 
 Response — 400 Bad Request:
 
@@ -374,6 +418,13 @@ not applied and a protected endpoint answers as if it were public.
 Authenticated users are simulated with `@WithMockUser`, optionally with
 a role.
 
+`SecurityConfig` needs a `JwtDecoder` to start, but `JwtConfig` is not
+loaded by `@WebMvcTest`, so each controller test declares a
+`@MockitoBean JwtDecoder` (and `AuthControllerTest` also a
+`JwtEncoder`). The decoder is never actually called: `@WithMockUser`
+places the user directly in the security context, without a token.
+Keeping `JwtConfig` separate means the tests do not need `JWT_SECRET`.
+
 **Why there is no `contextLoads` test.** The default test generated by
 Spring Initializr starts the whole application, including the database
 connection and `DataInitializer`. It failed without a running
@@ -393,8 +444,10 @@ broken, but not where.
 
 ## Roadmap
 
-- Accept the JWT on protected endpoints, replacing HTTP Basic
-- CORS configuration for the Angular frontend
+- Angular frontend: product list, product detail, login with JWT,
+  "my orders"
+- Allow the deployed frontend's origin in the CORS configuration
+- Integration tests against a disposable PostgreSQL (Testcontainers)
 
 ## NOTE
 
