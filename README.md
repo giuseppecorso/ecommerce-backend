@@ -14,6 +14,10 @@ learning project. Currently in active development.
 
 **Live demo:** https://ecommerce-backend-bzwc.onrender.com/swagger-ui.html
 
+**Frontend:** https://polite-grass-06140e410.6.azurestaticapps.net
+(Angular, hosted on Azure Static Web Apps, source at
+https://github.com/giuseppecorso/ecommerce-frontend)
+
 The demo runs on a free instance that sleeps after 15 minutes without
 traffic: the first request may take about a minute while it wakes up.
 
@@ -26,7 +30,8 @@ traffic: the first request may take about a minute while it wakes up.
 - PostgreSQL
 - Maven
 - Docker
-- Render (application hosting), Neon (managed PostgreSQL)
+- Render (API hosting), Neon (managed PostgreSQL), Azure Static Web
+  Apps (frontend hosting)
 
 ## API Endpoints
 
@@ -172,13 +177,15 @@ any id.
 
 ## CORS
 
-The Angular frontend runs on `http://localhost:4200`, a different
-origin from the API on port 8080. Browsers block a page from reading
-responses from another origin unless the server explicitly allows it.
-`SecurityConfig` enables CORS for `/api/**`, allowing that origin, the
-methods GET, POST, PUT, PATCH and DELETE, and the `Authorization` and
-`Content-Type` headers. A request from any other origin is refused
-with 403.
+The Angular frontend is served from a different origin than the API:
+`http://localhost:4200` in development, and
+`https://polite-grass-06140e410.6.azurestaticapps.net` in production
+(Azure Static Web Apps). Browsers block a page from reading responses
+from another origin unless the server explicitly allows it.
+`SecurityConfig` enables CORS for `/api/**`, allowing exactly these two
+origins, the methods GET, POST, PUT, PATCH and DELETE, and the
+`Authorization` and `Content-Type` headers. A request from any other
+origin is refused with 403.
 
 CORS is configured inside the security chain. Before a request with an
 `Authorization` header, the browser sends a preflight `OPTIONS`
@@ -444,9 +451,7 @@ broken, but not where.
 
 ## Roadmap
 
-- Angular frontend: product list, product detail, login with JWT,
-  "my orders"
-- Allow the deployed frontend's origin in the CORS configuration
+- Angular frontend: login with JWT, "my orders"
 - Integration tests against a disposable PostgreSQL (Testcontainers)
 
 ## NOTE
