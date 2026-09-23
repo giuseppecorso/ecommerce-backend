@@ -1,6 +1,6 @@
 ## Why this project
 
-I spent six years working on the operations side of an e-commerce
+I spent four years working on the operations side of an e-commerce
 company — catalog, orders, customers, after-sales. This project
 rebuilds that same domain from the backend side, as part of my
 transition into backend development. It's a learning project, built
