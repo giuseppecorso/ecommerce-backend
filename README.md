@@ -399,7 +399,8 @@ the database. They cover the domain rules of orders:
 
 - an unknown status is rejected, a valid one is persisted and returned;
 - an order with a product that does not exist is not created;
-- a USER can read their own order, but not someone else's;
+- a USER can read their own order, but not someone else's, while an
+  ADMIN can read any order;
 - an order that exceeds the available stock is rejected, and no
   product stock is saved.
 

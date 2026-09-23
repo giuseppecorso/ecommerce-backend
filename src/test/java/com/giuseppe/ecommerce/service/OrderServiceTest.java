@@ -125,4 +125,20 @@ public class OrderServiceTest {
         assertThrows(InsufficientStockException.class, () -> orderService.createOrder(orderRequest, "mario"));
         Mockito.verify(productRepository, Mockito.never()).save(Mockito.any());
     }
+
+    @Test
+    void getOrderByIdReturnsOrderWhenUserIsAdmin() {
+        User luigi = new User();
+        luigi.setUsername("luigi");
+
+        Order order = new Order();
+        order.setId(7L);
+        order.setUser(luigi);
+
+        Mockito.when(orderRepository.findById(7L)).thenReturn(Optional.of(order));
+
+        Optional<Order> result = orderService.getOrderById(7L, "admin", true);
+        assertTrue(result.isPresent());
+        assertEquals(7L, result.get().getId());
+    }
 }
