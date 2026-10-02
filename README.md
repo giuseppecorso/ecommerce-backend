@@ -18,6 +18,9 @@ learning project. Currently in active development.
 (Angular, hosted on Azure Static Web Apps, source at
 https://github.com/giuseppecorso/ecommerce-frontend)
 
+**Demo account:** username `demo`, password `demo1234` (USER role,
+with a few orders already placed).
+
 The demo runs on a free instance that sleeps after 15 minutes without
 traffic: the first request may take about a minute while it wakes up.
 
@@ -149,8 +152,12 @@ not in the source code: they are read from the `ADMIN_PASSWORD` and
 `USER_PASSWORD` environment variables. If either variable is missing,
 the application does not start.
 
-The passwords of the public deployment are not published. To try the
-live API, register your own user: it gets the USER role.
+The passwords of the `admin` and `user` accounts of the public
+deployment are not published. To try the live demo, log in with the
+demo account (`demo` / `demo1234`): it has the USER role and some
+orders already placed, so "My orders" is not empty. You can also
+register your own user: it gets the USER role and starts with no
+orders.
 
 ### Order ownership and visibility
 
