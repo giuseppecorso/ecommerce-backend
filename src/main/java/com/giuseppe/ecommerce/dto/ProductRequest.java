@@ -14,6 +14,8 @@ public class ProductRequest {
     private BigDecimal price;
     @PositiveOrZero
     private int stockQuantity;
+    private String category;
+    private String imageUrl;
 
     public ProductRequest() {    }
 
@@ -31,6 +33,22 @@ public class ProductRequest {
 
     public int getStockQuantity() {
         return stockQuantity;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public void setName(String name) {

@@ -35,7 +35,7 @@ public class ProductController {
         List<ProductResponse> responses = new ArrayList<>();
 
         for (Product p :  service.getAllProducts()) {
-            responses.add(new ProductResponse(p.getId(), p.getName(), p.getDescription(), p.getPrice(), p.getStockQuantity()));
+            responses.add(toResponse(p));
         }
 
         return responses;
@@ -50,10 +50,12 @@ public class ProductController {
     public ResponseEntity<ProductResponse> addProduct(@RequestBody @Valid ProductRequest req) {
 
         Product newProduct = new Product(null, req.getName(), req.getDescription(), req.getPrice(), req.getStockQuantity());
+        newProduct.setCategory(req.getCategory());
+        newProduct.setImageUrl(req.getImageUrl());
 
         Product saved = service.addNewProduct(newProduct);
 
-        ProductResponse resp = new ProductResponse(saved.getId(),  saved.getName(), saved.getDescription(), saved.getPrice(), saved.getStockQuantity());
+        ProductResponse resp = toResponse(saved);
 
         return new ResponseEntity<>(resp, HttpStatus.CREATED);
 
@@ -69,7 +71,7 @@ public class ProductController {
         Optional<Product> box = service.getProductById(id);
         if (box.isPresent()) {
             Product found = box.get();
-            ProductResponse resp = new ProductResponse(found.getId(), found.getName(), found.getDescription(), found.getPrice(), found.getStockQuantity());
+            ProductResponse resp = toResponse(found);
             return ResponseEntity.ok(resp);
         } else {
             return ResponseEntity.notFound().build();
@@ -100,15 +102,22 @@ public class ProductController {
     public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id,@RequestBody @Valid ProductRequest req) {
 
         Product productClient = new Product(id, req.getName(), req.getDescription(), req.getPrice(), req.getStockQuantity());
+        productClient.setCategory(req.getCategory());
+        productClient.setImageUrl(req.getImageUrl());
 
         Optional<Product> box = service.updateProduct(id, productClient);
 
         if (box.isPresent()) {
             Product saved = box.get();
-            ProductResponse resp = new ProductResponse(saved.getId(), saved.getName(), saved.getDescription(), saved.getPrice(), saved.getStockQuantity());
+            ProductResponse resp = toResponse(saved);
             return ResponseEntity.ok(resp);
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    private ProductResponse toResponse(Product p) {
+        return new ProductResponse(p.getId(), p.getName(), p.getDescription(), p.getPrice(), p.getStockQuantity(),
+                p.getCategory(), p.getImageUrl());
     }
 }

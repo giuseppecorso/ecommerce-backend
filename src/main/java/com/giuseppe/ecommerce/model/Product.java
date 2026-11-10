@@ -16,6 +16,8 @@ public class Product {
     private Long id;
     private BigDecimal price;
     private int stockQuantity;
+    private String category;
+    private String imageUrl;
 
     public Product() {
     }
@@ -46,6 +48,22 @@ public class Product {
 
     public int getStockQuantity() {
         return stockQuantity;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public void setId(Long id) {

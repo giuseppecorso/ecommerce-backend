@@ -34,6 +34,8 @@ public class DemoDataInitializer {
         return event -> {
             if (productRepository.count() == 0) {
                 productRepository.saveAll(demoProducts());
+            } else {
+                addMissingCategories(productRepository);
             }
 
             if (customerRepository.count() == 0) {
@@ -56,6 +58,23 @@ public class DemoDataInitializer {
                 }
             }
         };
+    }
+
+    // demo products saved before category and image existed get them here
+    private void addMissingCategories(ProductRepository productRepository) {
+        List<Product> demo = demoProducts();
+        for (Product existing : productRepository.findAll()) {
+            if (existing.getCategory() != null) {
+                continue;
+            }
+            for (Product d : demo) {
+                if (d.getName().equals(existing.getName())) {
+                    existing.setCategory(d.getCategory());
+                    existing.setImageUrl(d.getImageUrl());
+                    productRepository.save(existing);
+                }
+            }
+        }
     }
 
     private void createOrder(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
@@ -85,49 +104,57 @@ public class DemoDataInitializer {
     private List<Product> demoProducts() {
         return List.of(
                 // Desk & Study
-                product("Brass Pocket Compass", "A tiny brass compass that never lets you lose your way home.", "24.90", 40),
-                product("Moon Phase Wall Calendar", "Twelve months of moon phases, screen printed on heavy cotton paper.", "18.50", 60),
-                product("Walnut Pen Tray", "A hand-oiled walnut tray that keeps your favourite pens in one place.", "22.00", 35),
-                product("Linen Bound Notebook", "160 dotted pages in a linen cover that gets better with age.", "16.00", 80),
-                product("Hourglass Desk Timer", "Thirty minutes of falling sand for focused, phone-free work.", "19.90", 45),
-                product("Typewriter Key Bookmarks", "A set of three brass bookmarks inspired by vintage typewriter keys.", "12.50", 70),
+                product("Desk & Study", "Brass Pocket Compass", "A tiny brass compass that never lets you lose your way home.", "24.90", 40),
+                product("Desk & Study", "Moon Phase Wall Calendar", "Twelve months of moon phases, screen printed on heavy cotton paper.", "18.50", 60),
+                product("Desk & Study", "Walnut Pen Tray", "A hand-oiled walnut tray that keeps your favourite pens in one place.", "22.00", 35),
+                product("Desk & Study", "Linen Bound Notebook", "160 dotted pages in a linen cover that gets better with age.", "16.00", 80),
+                product("Desk & Study", "Hourglass Desk Timer", "Thirty minutes of falling sand for focused, phone-free work.", "19.90", 45),
+                product("Desk & Study", "Typewriter Key Bookmarks", "A set of three brass bookmarks inspired by vintage typewriter keys.", "12.50", 70),
 
                 // Home Curiosities
-                product("Glass Cloud Terrarium", "A hand-blown glass dome ready for moss, air plants or tiny treasures.", "34.00", 25),
-                product("Constellation Night Lamp", "A warm lamp that projects the northern sky on your ceiling.", "42.00", 20),
-                product("Wooden Puzzle Box", "A secret compartment box that opens only if you know the right moves.", "32.00", 30),
-                product("Storm Glass Barometer", "A sealed glass drop whose crystals change with the weather.", "27.50", 28),
-                product("Mini Zen Garden", "Sand, stones and a tiny rake for five quiet minutes a day.", "21.00", 50),
-                product("Beeswax Pillar Candle", "A slow-burning candle with a soft honey scent.", "13.50", 90),
+                product("Home Curiosities", "Glass Cloud Terrarium", "A hand-blown glass dome ready for moss, air plants or tiny treasures.", "34.00", 25),
+                product("Home Curiosities", "Constellation Night Lamp", "A warm lamp that projects the northern sky on your ceiling.", "42.00", 20),
+                product("Home Curiosities", "Wooden Puzzle Box", "A secret compartment box that opens only if you know the right moves.", "32.00", 30),
+                product("Home Curiosities", "Storm Glass Barometer", "A sealed glass drop whose crystals change with the weather.", "27.50", 28),
+                product("Home Curiosities", "Mini Zen Garden", "Sand, stones and a tiny rake for five quiet minutes a day.", "21.00", 50),
+                product("Home Curiosities", "Beeswax Pillar Candle", "A slow-burning candle with a soft honey scent.", "13.50", 90),
 
                 // Kitchen & Table
-                product("Ceramic Cloud Mug", "A stoneware mug shaped like a small cloud, glazed by hand.", "14.00", 75),
-                product("Olive Wood Honey Dipper", "Turned from a single piece of olive wood, no two are alike.", "8.90", 100),
-                product("Speckled Egg Cups", "A pair of speckled ceramic egg cups for slow weekend breakfasts.", "15.50", 55),
-                product("Copper Tea Infuser", "A fine mesh copper infuser for loose leaf tea.", "11.00", 65),
-                product("Enamel Camp Plate", "A white enamel plate with a blue rim, as good at home as outdoors.", "9.50", 85),
-                product("Cork Trivet Set", "Three hexagonal cork trivets that fit together like a honeycomb.", "17.00", 40),
+                product("Kitchen & Table", "Ceramic Cloud Mug", "A stoneware mug shaped like a small cloud, glazed by hand.", "14.00", 75),
+                product("Kitchen & Table", "Olive Wood Honey Dipper", "Turned from a single piece of olive wood, no two are alike.", "8.90", 100),
+                product("Kitchen & Table", "Speckled Egg Cups", "A pair of speckled ceramic egg cups for slow weekend breakfasts.", "15.50", 55),
+                product("Kitchen & Table", "Copper Tea Infuser", "A fine mesh copper infuser for loose leaf tea.", "11.00", 65),
+                product("Kitchen & Table", "Enamel Camp Plate", "A white enamel plate with a blue rim, as good at home as outdoors.", "9.50", 85),
+                product("Kitchen & Table", "Cork Trivet Set", "Three hexagonal cork trivets that fit together like a honeycomb.", "17.00", 40),
 
                 // Gifts & Games
-                product("Pocket Kaleidoscope", "A brass kaleidoscope small enough for a coat pocket.", "19.00", 48),
-                product("Wooden Domino Set", "Twenty-eight beech dominoes in a sliding lid box.", "26.00", 32),
-                product("Magnetic Travel Chess", "A fold-flat magnetic chess set for trains, planes and park benches.", "23.50", 38),
-                product("Origami Paper Collection", "120 sheets of patterned paper with instructions for ten models.", "10.50", 95),
-                product("Brass Spinning Top", "A precision turned top that spins for over three minutes.", "14.90", 60),
-                product("Mystery Seed Packets", "Five unlabelled seed packets. Plant them and see what grows.", "7.50", 120),
+                product("Gifts & Games", "Pocket Kaleidoscope", "A brass kaleidoscope small enough for a coat pocket.", "19.00", 48),
+                product("Gifts & Games", "Wooden Domino Set", "Twenty-eight beech dominoes in a sliding lid box.", "26.00", 32),
+                product("Gifts & Games", "Magnetic Travel Chess", "A fold-flat magnetic chess set for trains, planes and park benches.", "23.50", 38),
+                product("Gifts & Games", "Origami Paper Collection", "120 sheets of patterned paper with instructions for ten models.", "10.50", 95),
+                product("Gifts & Games", "Brass Spinning Top", "A precision turned top that spins for over three minutes.", "14.90", 60),
+                product("Gifts & Games", "Mystery Seed Packets", "Five unlabelled seed packets. Plant them and see what grows.", "7.50", 120),
 
                 // Travel Keepsakes
-                product("Scratch-Off World Map", "Scratch away every country you visit to reveal the colours below.", "28.00", 42),
-                product("Leather Luggage Tag", "A vegetable tanned leather tag that darkens with every trip.", "13.00", 70),
-                product("Folding Pocket Knife", "A beech handle pocket knife for picnics and long walks.", "29.90", 26),
-                product("Tin Travel Candle", "A cedar scented candle in a tin that closes for the road.", "11.50", 88),
-                product("Canvas Postcard Wallet", "A waxed canvas wallet that holds twenty postcards and a pencil.", "18.00", 36),
-                product("Vintage Style Field Flask", "A stainless steel flask with a canvas sleeve and a cork stopper.", "31.00", 0)
+                product("Travel Keepsakes", "Scratch-Off World Map", "Scratch away every country you visit to reveal the colours below.", "28.00", 42),
+                product("Travel Keepsakes", "Leather Luggage Tag", "A vegetable tanned leather tag that darkens with every trip.", "13.00", 70),
+                product("Travel Keepsakes", "Folding Pocket Knife", "A beech handle pocket knife for picnics and long walks.", "29.90", 26),
+                product("Travel Keepsakes", "Tin Travel Candle", "A cedar scented candle in a tin that closes for the road.", "11.50", 88),
+                product("Travel Keepsakes", "Canvas Postcard Wallet", "A waxed canvas wallet that holds twenty postcards and a pencil.", "18.00", 36),
+                product("Travel Keepsakes", "Vintage Style Field Flask", "A stainless steel flask with a canvas sleeve and a cork stopper.", "31.00", 0)
         );
     }
 
-    private Product product(String name, String description, String price, int stockQuantity) {
-        return new Product(null, name, description, new BigDecimal(price), stockQuantity);
+    private Product product(String category, String name, String description, String price, int stockQuantity) {
+        Product product = new Product(null, name, description, new BigDecimal(price), stockQuantity);
+        product.setCategory(category);
+        product.setImageUrl(imageFor(name));
+        return product;
+    }
+
+    // "Brass Pocket Compass" -> /img/products/brass-pocket-compass.svg (served by the frontend)
+    private String imageFor(String name) {
+        return "/img/products/" + name.toLowerCase().replaceAll("[^a-z0-9]+", "-") + ".svg";
     }
 
     private List<Customer> demoCustomers() {
