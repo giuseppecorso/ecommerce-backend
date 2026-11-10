@@ -7,12 +7,14 @@ public class OrderItemResponse {
     private String productName;
     private int quantity;
     private BigDecimal price;
+    private String imageUrl;
 
-    public OrderItemResponse(Long productId, String productName, int quantity, BigDecimal price) {
+    public OrderItemResponse(Long productId, String productName, int quantity, BigDecimal price, String imageUrl) {
         this.productId = productId;
         this.productName = productName;
         this.quantity = quantity;
         this.price = price;
+        this.imageUrl = imageUrl;
     }
 
     public Long getProductId() {
@@ -29,5 +31,9 @@ public class OrderItemResponse {
 
     public BigDecimal getPrice() {
         return price;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 }

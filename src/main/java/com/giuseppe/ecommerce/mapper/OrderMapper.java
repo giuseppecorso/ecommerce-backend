@@ -14,7 +14,7 @@ public class OrderMapper {
     public OrderResponse toResponse(Order order) {
         List<OrderItemResponse> items = new ArrayList<>();
         for (OrderItem item : order.getItems()) {
-            items.add(new OrderItemResponse(item.getProduct().getId(), item.getProduct().getName(), item.getQuantity(), item.getPrice()));
+            items.add(new OrderItemResponse(item.getProduct().getId(), item.getProduct().getName(), item.getQuantity(), item.getPrice(), item.getProduct().getImageUrl()));
         }
         OrderResponse resp = new OrderResponse(order.getId(), order.getUser().getUsername(), order.getDateOrder(), order.getStatus(), items);
         return resp;
