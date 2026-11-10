@@ -7,22 +7,21 @@ transition into backend development. It's a learning project, built
 one feature at a time: the roadmap reflects what's next, not what's
 already done.
 
-# E-commerce Backend API
+# Curio Lane — E-commerce Backend API
 
-REST API for an e-commerce platform, built as a structured
-learning project. Currently in active development.
+REST API behind Curio Lane, a small online shop of design objects and
+curiosities, built as a structured learning project. Currently in
+active development.
 
-**Live demo:** https://ecommerce-backend-bzwc.onrender.com/swagger-ui.html
+**Live shop:** https://curiolane.giuseppecorso.it
 
-**Frontend:** https://polite-grass-06140e410.6.azurestaticapps.net
-(Angular, hosted on Azure Static Web Apps, source at
-https://github.com/giuseppecorso/ecommerce-frontend)
+**API docs:** https://curiolane.giuseppecorso.it/swagger-ui.html
 
-**Demo account:** username `demo`, password `demo1234` (USER role,
+**Frontend source:** https://github.com/giuseppecorso/ecommerce-frontend
+(Angular)
+
+**Demo account:** username `user`, password `curio2026` (USER role,
 with a few orders already placed).
-
-The demo runs on a free instance that sleeps after 15 minutes without
-traffic: the first request may take about a minute while it wakes up.
 
 ## Tech Stack
 
@@ -32,9 +31,10 @@ traffic: the first request may take about a minute while it wakes up.
 - Spring Security (JWT with OAuth2 Resource Server, BCrypt)
 - PostgreSQL
 - Maven
-- Docker
-- Render (API hosting), Neon (managed PostgreSQL), Azure Static Web
-  Apps (frontend hosting)
+- Docker, Docker Compose
+- Nginx (reverse proxy), Let's Encrypt (HTTPS)
+- GitHub Actions (CI)
+- Ubuntu VPS (OVH)
 
 ## API Endpoints
 
@@ -152,12 +152,24 @@ not in the source code: they are read from the `ADMIN_PASSWORD` and
 `USER_PASSWORD` environment variables. If either variable is missing,
 the application does not start.
 
-The passwords of the `admin` and `user` accounts of the public
-deployment are not published. To try the live demo, log in with the
-demo account (`demo` / `demo1234`): it has the USER role and some
-orders already placed, so "My orders" is not empty. You can also
-register your own user: it gets the USER role and starts with no
-orders.
+On the public deployment the `user` account is the demo account
+(`user` / `curio2026`); the `admin` password is not published. You
+can also register your own user: it gets the USER role and starts
+with no orders.
+
+### Demo data
+
+`DemoDataInitializer` fills an empty database with 30 products, 12
+customers and 4 orders for the `user` account, so the shop is never
+empty on a fresh deployment. Each table is filled only if it is
+empty, so restarting the application never creates duplicates.
+
+It runs on `ApplicationReadyEvent` rather than as a
+`CommandLineRunner`. The demo orders need the `user` account created
+by `DataInitializer`, and Spring does not guarantee the order of
+unordered runners: on the first deployment the orders step ran first,
+found no user and skipped. `ApplicationReadyEvent` is published after
+all runners have completed.
 
 ### Order ownership and visibility
 
@@ -184,12 +196,13 @@ any id.
 
 ## CORS
 
-The Angular frontend is served from a different origin than the API:
-`http://localhost:4200` in development, and
-`https://polite-grass-06140e410.6.azurestaticapps.net` in production
-(Azure Static Web Apps). Browsers block a page from reading responses
+In production the frontend and the API share the same origin
+(`https://curiolane.giuseppecorso.it`, with the API under `/api`), so
+CORS does not come into play. It matters in development, where the
+Angular dev server runs on `http://localhost:4200` and the API on
+`http://localhost:8080`. Browsers block a page from reading responses
 from another origin unless the server explicitly allows it.
-`SecurityConfig` enables CORS for `/api/**`, allowing exactly these two
+`SecurityConfig` enables CORS for `/api/**`, allowing the listed
 origins, the methods GET, POST, PUT, PATCH and DELETE, and the
 `Authorization` and `Content-Type` headers. A request from any other
 origin is refused with 403.
@@ -285,46 +298,60 @@ initializing and fails to obtain a connection.
 
 ## Deployment
 
-The live demo runs the same Docker image used locally, on Render, with
-the database on Neon.
+The shop runs on an Ubuntu VPS, with the whole stack in Docker
+Compose (`docker-compose.prod.yml`).
 
-**Application — Render.** Render builds the image from the repository's
-Dockerfile and redeploys automatically on every push to `main`.
+    Internet ──443──> Nginx ──/api, /swagger-ui──> Spring Boot (127.0.0.1:8080) ──> PostgreSQL
+                        └─────everything else────> Angular   (127.0.0.1:8081)
 
-**Database — Neon.** A managed PostgreSQL instance on Neon's free plan.
-Render also offers managed PostgreSQL, but its free databases expire
-after 30 days, which does not suit a portfolio project that has to stay
-reachable.
+**Nginx as reverse proxy.** Nginx runs on the host and is the only
+entry point. It terminates HTTPS with a Let's Encrypt certificate
+(renewed automatically by Certbot) and routes requests by path: the
+API and the Swagger UI go to Spring Boot, everything else to the
+Angular container. The Nginx configuration is versioned in
+`deploy/nginx/curiolane.conf`.
 
-**Configuration.** Nothing environment-specific lives in the code. The
-Render service receives these environment variables:
+**Nothing else is exposed.** The application and frontend containers
+bind only to `127.0.0.1`, so they are reachable from Nginx but not
+from the Internet. PostgreSQL publishes no port at all: only the
+application reaches it, through the Compose network. The firewall
+(ufw) allows only SSH, HTTP and HTTPS.
 
-| Variable                     | Purpose                                         |
-|------------------------------|-------------------------------------------------|
-| `SPRING_DATASOURCE_URL`      | JDBC URL of the Neon database, with `sslmode=require` |
-| `SPRING_DATASOURCE_USERNAME` | Database user                                   |
-| `SPRING_DATASOURCE_PASSWORD` | Database password                               |
-| `ADMIN_PASSWORD`             | Password of the initial admin user              |
-| `USER_PASSWORD`              | Password of the initial regular user            |
-| `JWT_SECRET`                 | Key that signs JWT tokens (at least 32 characters) |
-| `PORT`                       | Port Render routes traffic to (8080)            |
+**Frontend image.** The frontend repository has its own multi-stage
+Dockerfile: a Node stage builds the Angular app, and an Nginx stage
+serves the static files, with a fallback to `index.html` for the
+client-side routes.
 
-The `SPRING_DATASOURCE_*` variables override `application.properties`,
-exactly as in Docker Compose. On the first startup against the empty
-Neon database, Hibernate creates the schema and `DataInitializer`
-creates the two initial users.
+**Configuration.** Nothing environment-specific lives in the code.
+Secrets are read from a `.env` file that exists only on the server
+and is ignored by Git; `.env.example` lists the required variables
+without values:
+
+| Variable         | Purpose                                         |
+|------------------|-------------------------------------------------|
+| `DB_USER`        | Database user                                   |
+| `DB_PASSWORD`    | Database password                               |
+| `ADMIN_PASSWORD` | Password of the initial admin user              |
+| `USER_PASSWORD`  | Password of the initial regular user            |
+| `JWT_SECRET`     | Key that signs JWT tokens (at least 32 characters) |
+
+**CI.** A GitHub Actions workflow runs the test suite on every push
+and pull request to `main`.
+
+To deploy a new version, on the server:
+
+    git pull
+    docker compose -f docker-compose.prod.yml up -d --build
 
 ### Try the live API
 
-    curl https://ecommerce-backend-bzwc.onrender.com/api/products
+    curl https://curiolane.giuseppecorso.it/api/products
 
-    curl -X POST https://ecommerce-backend-bzwc.onrender.com/api/auth/register -H "Content-Type: application/json" -d "{\"username\": \"yourname\", \"password\": \"password123\"}"
-
-    curl -X POST https://ecommerce-backend-bzwc.onrender.com/api/auth/login -H "Content-Type: application/json" -d "{\"username\": \"yourname\", \"password\": \"password123\"}"
+    curl -X POST https://curiolane.giuseppecorso.it/api/auth/login -H "Content-Type: application/json" -d "{\"username\": \"user\", \"password\": \"curio2026\"}"
 
 Then send the token returned by the login on the protected endpoints:
 
-    curl https://ecommerce-backend-bzwc.onrender.com/api/orders -H "Authorization: Bearer <token>"
+    curl https://curiolane.giuseppecorso.it/api/orders -H "Authorization: Bearer <token>"
 
 A registered user can read their own orders and customers, but creating a
 product returns 403 Forbidden: product changes are reserved to ADMIN.
@@ -459,7 +486,8 @@ broken, but not where.
 
 ## Roadmap
 
-- Angular frontend: login with JWT, "my orders"
+- Product categories and images, frontend redesign
+- Continuous deployment: redeploy on the VPS from GitHub Actions
 - Integration tests against a disposable PostgreSQL (Testcontainers)
 
 ## NOTE
