@@ -10,7 +10,8 @@ import com.giuseppe.ecommerce.repository.OrderItemRepository;
 import com.giuseppe.ecommerce.repository.OrderRepository;
 import com.giuseppe.ecommerce.repository.ProductRepository;
 import com.giuseppe.ecommerce.repository.UserRepository;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,13 +23,15 @@ import java.util.Optional;
 @Configuration
 public class DemoDataInitializer {
 
+    // runs on ApplicationReadyEvent, i.e. after every CommandLineRunner,
+    // so the demo user created by DataInitializer already exists
     @Bean
-    public CommandLineRunner loadDemoData(ProductRepository productRepository,
+    public ApplicationListener<ApplicationReadyEvent> loadDemoData(ProductRepository productRepository,
                                           CustomerRepository customerRepository,
                                           OrderRepository orderRepository,
                                           OrderItemRepository orderItemRepository,
                                           UserRepository userRepository) {
-        return args -> {
+        return event -> {
             if (productRepository.count() == 0) {
                 productRepository.saveAll(demoProducts());
             }
