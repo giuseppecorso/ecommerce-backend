@@ -33,7 +33,7 @@ with a few orders already placed).
 - Maven
 - Docker, Docker Compose
 - Nginx (reverse proxy), Let's Encrypt (HTTPS)
-- GitHub Actions (CI)
+- GitHub Actions (CI/CD)
 - Ubuntu VPS (OVH)
 
 ## API Endpoints
@@ -335,13 +335,19 @@ without values:
 | `USER_PASSWORD`  | Password of the initial regular user            |
 | `JWT_SECRET`     | Key that signs JWT tokens (at least 32 characters) |
 
-**CI.** A GitHub Actions workflow runs the test suite on every push
-and pull request to `main`.
+**CI/CD.** A GitHub Actions workflow runs the test suite on every push
+and pull request to `main`. When a push to `main` passes, a second job
+connects to the server over SSH and runs `deploy/deploy.sh`, which pulls
+both repositories and rebuilds the containers. The frontend repository
+does the same after its build.
 
-To deploy a new version, on the server:
+The SSH key used by the workflow is stored in the repository secrets and
+is restricted on the server to that single script (`command=` in
+`authorized_keys`): it cannot open a shell or run anything else.
 
-    git pull
-    docker compose -f docker-compose.prod.yml up -d --build
+To deploy by hand, on the server:
+
+    ~/curiolane/ecommerce/deploy/deploy.sh
 
 ### Try the live API
 
@@ -487,7 +493,6 @@ broken, but not where.
 ## Roadmap
 
 - Product categories and images, frontend redesign
-- Continuous deployment: redeploy on the VPS from GitHub Actions
 - Integration tests against a disposable PostgreSQL (Testcontainers)
 
 ## NOTE
